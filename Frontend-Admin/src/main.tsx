@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 function App() {
-  return <div>Pocket Plan Frontend Ready</div>;
+  return <div>Pocket Plan Admin Portal</div>;
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

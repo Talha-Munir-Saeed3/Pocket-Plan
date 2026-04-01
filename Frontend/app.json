@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Pocket Plan",
+    "slug": "pocketplan-frontend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "pocketplan",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router"
+    ],
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
