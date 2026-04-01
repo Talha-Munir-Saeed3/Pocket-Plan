@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pocket Plan — High-Fidelity Wireframes</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #6C63FF;
+    --purple-dark: #4B44CC;
+    --purple-light: #EEF0FF;
+    --green: #22C55E;
+    --red: #EF4444;
+    --orange: #F97316;
+    --gold: #F59E0B;
+    --navy: #1A1B3B;
+    --bg: #F0F1FF;
+    --white: #FFFFFF;
+    --gray: #9CA3AF;
+    --gray-light: #F3F4F6;
+    --text: #1F2937;
+    --text-light: #6B7280;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #E8E9F8;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* PAGE HEADER */
+  .page-header {
+    background: var(--navy);
+    padding: 40px 60px;
+    text-align: center;
+  }
+  .page-header h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+  }
+  .page-header h1 span { color: var(--purple); }
+  .page-header p { color: #9CA3AF; margin-top: 8px; font-size: 15px; }
+  .badge {
+    display: inline-block;
+    background: rgba(108,99,255,0.2);
+    border: 1px solid rgba(108,99,255,0.4);
+    color: #a5b4fc;
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: 12px;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* GRID LAYOUT */
+  .grid-section {
+    padding: 50px 40px;
+  }
+  .section-label {
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(108,99,255,0.2);
+  }
+  .phones-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-bottom: 50px;
+  }
+
+  /* PHONE SHELL */
+  .phone {
+    background: #fff;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(108,99,255,0.18), 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+    position: relative;
+    border: 3px solid rgba(255,255,255,0.8);
+    max-width: 340px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .phone-label {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .phone-label .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    background: var(--purple);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 8px;
+    font-family: 'Sora', sans-serif;
+  }
+  .phone-label .name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    font-family: 'Sora', sans-serif;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 18px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--purple);
+  }
+  .status-bar.light { background: #fff; color: var(--text); }
+  .status-bar.dark { background: var(--navy); color: #fff; }
+  .status-icons { display: flex; gap: 4px; align-items: center; font-size: 10px; }
+
+  /* SCREEN CONTENT */
+  .screen { font-size: 13px; }
+
+  /* ===== SCREEN 1: SIGN IN ===== */
+  .signin-header {
+    background: var(--purple);
+    padding: 30px 24px 50px;
+    text-align: center;
+    border-radius: 0 0 40px 40px;
+  }
+  .app-icon {
+    width: 56px; height: 56px;
+    background: #fff;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .signin-header h2 { color: #fff; font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; }
+  .signin-header p { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px; }
+
+  .signin-body { padding: 24px 20px 20px; background: #fff; }
+  .field-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-light); margin-bottom: 6px; }
+  .field-input {
+    width: 100%; border: 1.5px solid #E5E7EB; border-radius: 12px;
+    padding: 10px 14px; font-size: 13px; color: var(--gray);
+    margin-bottom: 14px; font-family: 'DM Sans', sans-serif;
+    background: var(--gray-light);
+  }
+  .field-input.active { border-color: var(--purple); background: var(--purple-light); color: var(--text); }
+  .forgot { text-align: right; color: var(--purple); font-size: 11px; font-weight: 600; margin-bottom: 18px; cursor: pointer; }
+  .btn-primary {
+    width: 100%; background: var(--purple); color: #fff;
+    border: none; border-radius: 14px; padding: 13px;
+    font-size: 14px; font-weight: 700; font-family: 'Sora', sans-serif;
+    cursor: pointer; margin-bottom: 16px;
+  }
+  .divider { display: flex; align-items: center; gap: 10px; color: var(--gray); font-size: 11px; margin-bottom: 14px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #E5E7EB; }
+  .btn-google {
+    width: 100%; background: #fff; color: var(--text);
+    border: 1.5px solid #E5E7EB; border-radius: 14px; padding: 11px;
+    font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .signup-link { text-align: center; color: var(--gray); font-size: 12px; margin-top: 14px; }
+  .signup-link span { color: var(--purple); font-weight: 700; }
+
+  /* ===== SCREEN 2: SIGN UP ===== */
+  .signup-header {
+    background: var(--purple);
+    padding: 16px 20px 22px;
+  }
+  .back-btn { color: #fff; font-size: 18px; cursor: pointer; display: inline-block; margin-bottom: 10px; }
+  .signup-header h2 { color: #fff; font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; }
+  .signup-header p { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px; }
+  .signup-body { padding: 20px; background: #fff; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ===== SCREEN 3: DASHBOARD ===== */
+  .dash-header {
+    background: var(--purple);
+    padding: 14px 18px 24px;
+  }
+  .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .greeting { color: rgba(255,255,255,0.8); font-size: 12px; }
+  .username { color: #fff; font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 700; }
+  .avatar-btn {
+    width: 38px; height: 38px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .balance-card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 18px; padding: 14px 16px;
+    backdrop-filter: blur(10px);
+  }
+  .balance-label { color: rgba(255,255,255,0.7); font-size: 11px; }
+  .balance-amount { color: #fff; font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 800; margin: 4px 0 12px; }
+  .balance-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat-item { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 10px; }
+  .stat-item .s-label { color: rgba(255,255,255,0.6); font-size: 10px; margin-bottom: 2px; }
+  .stat-item .s-val { color: #fff; font-size: 13px; font-weight: 700; font-family: 'Sora', sans-serif; }
+  .s-val.green { color: var(--green); }
+  .s-val.red { color: #FF8A80; }
+  .s-val.gold { color: var(--gold); }
+
+  .dash-body { padding: 16px; background: var(--bg); }
+  .quick-actions {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 8px; margin-bottom: 18px;
+  }
+  .qa-btn {
+    background: #fff; border-radius: 14px; padding: 12px 8px;
+    text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .qa-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .qa-label { font-size: 10px; color: var(--text-light); font-weight: 600; }
+
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .section-title { font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; }
+  .see-all { color: var(--purple); font-size: 12px; font-weight: 600; }
+
+  .budget-item {
+    background: #fff; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .budget-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .budget-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .budget-pct { font-size: 12px; font-weight: 700; }
+  .pct-green { color: var(--green); }
+  .pct-orange { color: var(--orange); }
+  .progress-bar { height: 6px; background: #E5E7EB; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .fill-green { background: var(--green); }
+  .fill-orange { background: var(--orange); }
+  .fill-red { background: var(--red); }
+  .budget-amounts { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-light); }
+
+  /* ===== SCREEN 4: ADD TRANSACTION ===== */
+  .add-header {
+    background: var(--purple);
+    padding: 14px 18px 20px;
+  }
+  .screen-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .screen-nav .back { color: #fff; font-size: 18px; cursor: pointer; }
+  .screen-nav h3 { color: #fff; font-family: 'Sora', sans-serif; font-size: 17px; font-weight: 700; }
+  .tabs { display: flex; gap: 6px; }
+  .tab {
+    padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,0.7); cursor: pointer; border: 1.5px solid rgba(255,255,255,0.3);
+  }
+  .tab.active { background: #fff; color: var(--purple); border-color: #fff; }
+  .amount-display { text-align: center; padding: 20px 0 10px; }
+  .amount-currency { color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 600; }
+  .amount-val { color: #fff; font-family: 'Sora', sans-serif; font-size: 42px; font-weight: 800; }
+
+  .add-body { background: #fff; padding: 18px; }
+  .cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .cat-item {
+    background: var(--gray-light); border-radius: 12px; padding: 10px 6px;
+    text-align: center; cursor: pointer;
+  }
+  .cat-item.selected { background: var(--purple-light); border: 2px solid var(--purple); }
+  .cat-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .cat-name { font-size: 10px; color: var(--text-light); font-weight: 600; }
+  .cat-item.selected .cat-name { color: var(--purple); font-weight: 700; }
+
+  .form-field { margin-bottom: 12px; }
+  .form-field .fl { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-light); margin-bottom: 5px; }
+  .form-field .fi {
+    width: 100%; background: var(--gray-light); border: 1.5px solid transparent;
+    border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+  }
+  .btn-add {
+    width: 100%; background: var(--purple); color: #fff; border: none;
+    border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700;
+    font-family: 'Sora', sans-serif; cursor: pointer; margin-top: 8px;
+  }
+
+  /* ===== SCREEN 5: TRANSACTIONS ===== */
+  .txn-header { padding: 16px 18px; background: #fff; }
+  .txn-header h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+  .search-bar {
+    display: flex; align-items: center; background: var(--gray-light);
+    border-radius: 12px; padding: 9px 12px; gap: 8px; margin-bottom: 12px;
+  }
+  .search-bar span { color: var(--gray); font-size: 14px; }
+  .search-bar input { border: none; background: transparent; font-size: 13px; color: var(--gray); font-family: 'DM Sans', sans-serif; outline: none; }
+  .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+  .chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    background: var(--gray-light); color: var(--text-light); cursor: pointer; white-space: nowrap;
+  }
+  .chip.active { background: var(--purple); color: #fff; }
+
+  .txn-summary {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px; padding: 12px 18px; background: #F8F9FF;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  .txn-stat { text-align: center; }
+  .txn-stat .ts-label { font-size: 10px; color: var(--text-light); font-weight: 600; margin-bottom: 3px; }
+  .txn-stat .ts-val { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; }
+  .ts-val.g { color: var(--green); }
+  .ts-val.r { color: var(--red); }
+
+  .txn-body { padding: 0 18px 16px; background: #fff; }
+  .txn-date-header { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray); padding: 12px 0 6px; }
+  .txn-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
+  .txn-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .ic-food { background: #FFF3E0; }
+  .ic-transport { background: #E8F5E9; }
+  .ic-health { background: #FCE4EC; }
+  .ic-shopping { background: #E8EAF6; }
+  .txn-info { flex: 1; }
+  .txn-name { font-size: 13px; font-weight: 600; }
+  .txn-meta { font-size: 10px; color: var(--text-light); margin-top: 1px; }
+  .txn-amount { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; color: var(--red); }
+
+  /* ===== SCREEN 6: REPORTS ===== */
+  .reports-header { padding: 16px 18px; background: #fff; border-bottom: 1px solid #F3F4F6; }
+  .reports-header h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+  .period-tabs { display: flex; background: var(--gray-light); border-radius: 12px; padding: 4px; gap: 4px; }
+  .period-tab { flex: 1; text-align: center; padding: 7px; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--text-light); cursor: pointer; }
+  .period-tab.active { background: #fff; color: var(--purple); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+  .reports-body { padding: 16px; background: var(--bg); }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .stat-card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .sc-label { font-size: 11px; color: var(--text-light); font-weight: 600; margin-bottom: 4px; }
+  .sc-val { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; }
+  .sc-change { font-size: 10px; margin-top: 3px; }
+  .sc-change.up { color: var(--green); }
+  .sc-change.down { color: var(--red); }
+
+  .chart-card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .chart-title { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 70px; }
+  .bar-group { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+  .bar-pair { display: flex; gap: 2px; align-items: flex-end; }
+  .bar { width: 10px; border-radius: 4px 4px 0 0; }
+  .bar.income { background: var(--green); }
+  .bar.expense { background: var(--red); }
+  .bar-label { font-size: 9px; color: var(--gray); text-align: center; }
+  .chart-legend { display: flex; gap: 14px; margin-top: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-light); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .pie-section { display: flex; gap: 16px; align-items: center; }
+  .pie-visual { width: 80px; height: 80px; flex-shrink: 0; }
+  .pie-legend { flex: 1; }
+  .pie-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .pie-name { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .pie-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .pie-pct { font-size: 12px; font-weight: 700; font-family: 'Sora', sans-serif; }
+
+  /* ===== SCREEN 7: AI CHAT ===== */
+  .ai-header {
+    background: var(--purple);
+    padding: 12px 18px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ai-avatar {
+    width: 40px; height: 40px; background: #fff;
+    border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .ai-info { flex: 1; }
+  .ai-name { color: #fff; font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; }
+  .ai-status { color: rgba(255,255,255,0.7); font-size: 11px; }
+  .ai-menu { color: rgba(255,255,255,0.7); font-size: 20px; }
+
+  .ai-body { background: #F8F9FF; padding: 14px; min-height: 300px; }
+  .alert-banner {
+    background: #FFF8E1; border: 1.5px solid var(--gold); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 14px;
+  }
+  .alert-title { font-size: 11px; font-weight: 700; color: var(--orange); margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
+  .alert-text { font-size: 11px; color: #78540A; }
+
+  .msg-bubble {
+    margin-bottom: 10px; display: flex; flex-direction: column;
+  }
+  .msg-bubble.bot { align-items: flex-start; }
+  .msg-bubble.user { align-items: flex-end; }
+  .bubble {
+    max-width: 85%; padding: 10px 13px; border-radius: 16px;
+    font-size: 12px; line-height: 1.5;
+  }
+  .bubble.bot { background: #fff; color: var(--text); border-bottom-left-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .bubble.user { background: var(--purple); color: #fff; border-bottom-right-radius: 4px; }
+  .msg-time { font-size: 9px; color: var(--gray); margin-top: 3px; }
+  .highlight { font-weight: 700; }
+
+  .quick-prompts { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .qp-chip {
+    padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    border: 1.5px solid var(--purple); color: var(--purple); cursor: pointer; background: #fff;
+  }
+
+  .ai-input {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border-top: 1px solid #E5E7EB; padding: 12px 16px;
+  }
+  .ai-input input {
+    flex: 1; border: none; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; color: var(--text);
+  }
+  .ai-input input::placeholder { color: var(--gray); }
+  .send-btn {
+    width: 34px; height: 34px; background: var(--purple); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; cursor: pointer;
+  }
+
+  /* ===== SCREEN 8: SETTINGS ===== */
+  .settings-header { padding: 16px 18px; background: #fff; border-bottom: 1px solid #F3F4F6; }
+  .settings-header h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; }
+  .profile-card {
+    background: var(--purple); border-radius: 16px; margin: 16px;
+    padding: 16px; display: flex; align-items: center; gap: 12px;
+  }
+  .profile-avatar {
+    width: 50px; height: 50px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;
+  }
+  .profile-info { flex: 1; }
+  .profile-name { color: #fff; font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 700; }
+  .profile-email { color: rgba(255,255,255,0.7); font-size: 11px; margin: 2px 0; }
+  .plan-badge { display: inline-block; background: var(--gold); color: #7C2D00; border-radius: 8px; padding: 2px 10px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
+  .edit-btn {
+    background: rgba(255,255,255,0.2); color: #fff; border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 10px; padding: 7px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+
+  .settings-section { padding: 0 16px; margin-bottom: 14px; }
+  .settings-section-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gray); margin-bottom: 8px; }
+  .settings-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .settings-row {
+    display: flex; align-items: center; gap: 12px; padding: 13px 16px;
+    border-bottom: 1px solid #F3F4F6;
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-icon {
+    width: 34px; height: 34px; background: var(--purple-light);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+  }
+  .settings-text { flex: 1; }
+  .settings-name { font-size: 13px; font-weight: 600; }
+  .settings-desc { font-size: 10px; color: var(--text-light); margin-top: 1px; }
+  .settings-arrow { color: var(--gray); font-size: 14px; }
+  .toggle {
+    width: 36px; height: 20px; background: var(--purple);
+    border-radius: 10px; position: relative; cursor: pointer;
+  }
+  .toggle::after {
+    content: ''; position: absolute; width: 16px; height: 16px;
+    background: #fff; border-radius: 50%; top: 2px; right: 2px;
+  }
+  .toggle.off { background: #D1D5DB; }
+  .toggle.off::after { right: auto; left: 2px; }
+
+  /* ===== SCREEN 9: PREMIUM ===== */
+  .premium-header {
+    background: var(--navy);
+    padding: 30px 20px 20px; text-align: center;
+  }
+  .crown { font-size: 48px; display: block; margin-bottom: 10px; }
+  .premium-title { color: #fff; font-family: 'Sora', sans-serif; font-size: 26px; font-weight: 800; }
+  .premium-title span { color: var(--gold); }
+  .premium-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 5px; }
+
+  .premium-body { padding: 16px; background: var(--navy); min-height: 300px; }
+  .plan-card {
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 16px; margin-bottom: 10px;
+  }
+  .plan-card.popular { border-color: var(--purple); background: rgba(108,99,255,0.15); }
+  .plan-card.yearly { border-color: var(--gold); background: rgba(245,158,11,0.1); }
+  .plan-name { color: #fff; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .plan-price { color: #fff; font-family: 'Sora', sans-serif; font-size: 28px; font-weight: 800; }
+  .plan-price span { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.5); }
+  .plan-features { margin-top: 12px; }
+  .pf-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: rgba(255,255,255,0.8); }
+  .pf-check { color: var(--green); font-size: 12px; }
+  .pf-cross { color: var(--red); font-size: 12px; }
+  .save-badge {
+    display: inline-block; background: var(--gold); color: #7C2D00;
+    border-radius: 8px; padding: 2px 10px; font-size: 10px; font-weight: 800; margin-left: 8px;
+  }
+  .btn-premium {
+    width: 100%; background: var(--purple); color: #fff; border: none;
+    border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700;
+    font-family: 'Sora', sans-serif; cursor: pointer; margin-top: 10px;
+  }
+  .btn-gold { background: linear-gradient(135deg, var(--gold), #F97316); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 0 12px; border-top: 1px solid #E5E7EB; background: #fff;
+  }
+  .nav-item { text-align: center; cursor: pointer; }
+  .nav-icon { font-size: 18px; display: block; }
+  .nav-label { font-size: 9px; color: var(--gray); font-weight: 600; margin-top: 2px; }
+  .nav-item.active .nav-label { color: var(--purple); }
+  .nav-item.active .nav-icon { filter: none; }
+
+  /* COLOR SYSTEM */
+  .color-system {
+    background: var(--navy); padding: 30px 40px; margin-top: 20px;
+    border-radius: 16px; margin: 30px 40px;
+  }
+  .cs-title { color: #fff; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; }
+  .cs-chips { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .cs-chip { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); border-radius: 20px; padding: 8px 16px; }
+  .cs-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .cs-label { color: rgba(255,255,255,0.8); font-size: 12px; }
+
+  /* FOOTER */
+  .page-footer { text-align: center; padding: 20px 40px 40px; color: var(--gray); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h1>Pocket <span>Plan</span></h1>
+  <p>High-Fidelity Mobile App Wireframes — All Screens</p>
+  <div class="badge">Team CPS · Sprint 0 · v1.0 · Feb 2026</div>
+</div>
+
+<!-- ROW 1: Screens 1–3 -->
+<div class="grid-section">
+  <div class="section-label">Authentication & Dashboard</div>
+  <div class="phones-row">
+
+    <!-- SCREEN 1: SIGN IN -->
+    <div>
+      <div class="phone-label"><span class="num">1</span><span class="name">Sign In</span></div>
+      <div class="phone">
+        <div class="status-bar" style="background:var(--purple);">
+          <span>9:41</span><div class="status-icons">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="signin-header">
+            <div class="app-icon">💰</div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to your Pocket Plan account</p>
+          </div>
+          <div class="signin-body">
+            <div class="field-label">Email Address</div>
+            <div class="field-input">you@email.com</div>
+            <div class="field-label">Password</div>
+            <div class="field-input active">••••••••</div>
+            <div class="forgot">Forgot Password?</div>
+            <button class="btn-primary">Sign In</button>
+            <div class="divider">or continue with</div>
+            <button class="btn-google">🌐 Continue with Google</button>
+            <div class="signup-link">Don't have an account? <span>Sign Up</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: SIGN UP -->
+    <div>
+      <div class="phone-label"><span class="num">2</span><span class="name">Sign Up</span></div>
+      <div class="phone">
+        <div class="status-bar" style="background:var(--purple);">
+          <span>9:41</span><div class="status-icons">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="signup-header">
+            <div class="back-btn">←</div>
+            <h2>Create Account</h2>
+            <p>Join Pocket Plan and take control of your finances</p>
+          </div>
+          <div class="signup-body">
+            <div class="field-row">
+              <div>
+                <div class="field-label">First Name</div>
+                <div class="field-input active">Ali</div>
+              </div>
+              <div>
+                <div class="field-label">Last Name</div>
+                <div class="field-input">Khan</div>
+              </div>
+            </div>
+            <div class="field-label">Email Address</div>
+            <div class="field-input active">you@email.com</div>
+            <div class="field-label">Phone Number</div>
+            <div class="field-input">+92 300 0000000</div>
+            <div class="field-label">Monthly Income (PKR)</div>
+            <div class="field-input">50,000</div>
+            <div class="field-label">Password</div>
+            <div class="field-input">••••••••</div>
+            <div class="field-label">Confirm Password</div>
+            <div class="field-input">••••••••</div>
+            <button class="btn-primary" style="margin-top:14px;">Create Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: DASHBOARD -->
+    <div>
+      <div class="phone-label"><span class="num">3</span><span class="name">Dashboard</span></div>
+      <div class="phone">
+        <div class="status-bar" style="background:var(--purple);">
+          <span>9:41</span><div class="status-icons">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="dash-header">
+            <div class="dash-top">
+              <div>
+                <div class="greeting">Good Morning 👋</div>
+                <div class="username">Ahmed Khan</div>
+              </div>
+              <div class="avatar-btn">👤</div>
+            </div>
+            <div class="balance-card">
+              <div class="balance-label">Total Balance</div>
+              <div class="balance-amount">PKR 42,500</div>
+              <div class="balance-stats">
+                <div class="stat-item">
+                  <div class="s-label">Income</div>
+                  <div class="s-val green">↑ 85,000</div>
+                </div>
+                <div class="stat-item">
+                  <div class="s-label">Expenses</div>
+                  <div class="s-val red">↓ 42,500</div>
+                </div>
+                <div class="stat-item">
+                  <div class="s-label">Savings</div>
+                  <div class="s-val gold">💰 12,000</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dash-body">
+            <div class="quick-actions">
+              <div class="qa-btn"><span class="qa-icon">➕</span><span class="qa-label">Add</span></div>
+              <div class="qa-btn"><span class="qa-icon">📊</span><span class="qa-label">Reports</span></div>
+              <div class="qa-btn"><span class="qa-icon">💳</span><span class="qa-label">Budget</span></div>
+              <div class="qa-btn"><span class="qa-icon">🤖</span><span class="qa-label">AI Chat</span></div>
+            </div>
+            <div class="section-header">
+              <span class="section-title">Budget Overview</span>
+              <span class="see-all">See All</span>
+            </div>
+            <div class="budget-item">
+              <div class="budget-row">
+                <div class="budget-name">🎯 Monthly Savings Goal</div>
+                <div class="budget-pct pct-green">62%</div>
+              </div>
+              <div class="progress-bar"><div class="progress-fill fill-green" style="width:62%"></div></div>
+              <div class="budget-amounts"><span>PKR 7,440</span><span>Goal: PKR 12,000</span></div>
+            </div>
+            <div class="budget-item">
+              <div class="budget-row">
+                <div class="budget-name">🍔 Food & Dining</div>
+                <div class="budget-pct pct-orange">35%</div>
+              </div>
+              <div class="progress-bar"><div class="progress-fill fill-orange" style="width:35%"></div></div>
+              <div class="budget-amounts"><span>PKR 3,500</span><span>PKR 10,000</span></div>
+            </div>
+            <div class="budget-item">
+              <div class="budget-row">
+                <div class="budget-name">🚗 Transport</div>
+                <div class="budget-pct" style="color:var(--red)">68%</div>
+              </div>
+              <div class="progress-bar"><div class="progress-fill fill-red" style="width:68%"></div></div>
+              <div class="budget-amounts"><span>PKR 6,800</span><span>PKR 10,000</span></div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item active"><span class="nav-icon">🏠</span><div class="nav-label" style="color:var(--purple)">Home</div></div>
+            <div class="nav-item"><span class="nav-icon">📋</span><div class="nav-label">History</div></div>
+            <div class="nav-item"><span class="nav-icon">📊</span><div class="nav-label">Reports</div></div>
+            <div class="nav-item"><span class="nav-icon">🤖</span><div class="nav-label">AI Chat</div></div>
+            <div class="nav-item"><span class="nav-icon">⚙️</span><div class="nav-label">Settings</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: Screens 4–6 -->
+  <div class="section-label">Transactions & Reports</div>
+  <div class="phones-row">
+
+    <!-- SCREEN 4: ADD TRANSACTION -->
+    <div>
+      <div class="phone-label"><span class="num">4</span><span class="name">Add Transaction</span></div>
+      <div class="phone">
+        <div class="status-bar" style="background:var(--purple);">
+          <span>9:41</span><div class="status-icons">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="add-header">
+            <div class="screen-nav">
+              <span class="back">←</span>
+              <h3>Add Transaction</h3>
+            </div>
+            <div class="tabs">
+              <div class="tab active">Expense</div>
+              <div class="tab">Income</div>
+              <div class="tab">Transfer</div>
+              <div class="tab">Borrow</div>
+            </div>
+            <div class="amount-display">
+              <div class="amount-currency">PKR</div>
+              <div class="amount-val">2,500</div>
+            </div>
+          </div>
+          <div class="add-body">
+            <div class="field-label" style="margin-bottom:8px;">Category</div>
+            <div class="cat-grid">
+              <div class="cat-item selected"><span class="cat-icon">🍔</span><span class="cat-name">Food</span></div>
+              <div class="cat-item"><span class="cat-icon">🚗</span><span class="cat-name">Transport</span></div>
+              <div class="cat-item"><span class="cat-icon">🛍</span><span class="cat-name">Shopping</span></div>
+              <div class="cat-item"><span class="cat-icon">🏠</span><span class="cat-name">Rent</span></div>
+              <div class="cat-item"><span class="cat-icon">💊</span><span class="cat-name">Health</span></div>
+              <div class="cat-item"><span class="cat-icon">🎬</span><span class="cat-name">Entertain</span></div>
+              <div class="cat-item"><span class="cat-icon">📚</span><span class="cat-name">Education</span></div>
+              <div class="cat-item"><span class="cat-icon">➕</span><span class="cat-name">More</span></div>
+            </div>
+            <div class="form-field">
+              <div class="fl">Description</div>
+              <div class="fi">McDonald's Meal</div>
+            </div>
+            <div class="form-field">
+              <div class="fl">Date & Time</div>
+              <div class="fi">Today, Feb 20 — 2:30 PM</div>
+            </div>
+            <div class="form-field">
+              <div class="fl">Notes (Optional)</div>
+              <div class="fi" style="color:var(--gray);">Add a note...</div>
+            </div>
+            <button class="btn-add">Add Transaction</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 5: TRANSACTION HISTORY -->
+    <div>
+      <div class="phone-label"><span class="num">5</span><span class="name">Transaction History</span></div>
+      <div class="phone">
+        <div class="status-bar light">
+          <span>9:41</span><div class="status-icons" style="color:var(--text)">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="txn-header">
+            <h2>Transactions</h2>
+            <div class="search-bar">
+              <span>🔍</span>
+              <input type="text" placeholder="Search transactions...">
+            </div>
+            <div class="filter-chips">
+              <div class="chip active">All</div>
+              <div class="chip">Expenses</div>
+              <div class="chip">Income</div>
+              <div class="chip">This Week</div>
+            </div>
+          </div>
+          <div class="txn-summary">
+            <div class="txn-stat">
+              <div class="ts-label">Total Income</div>
+              <div class="ts-val g">+85,000</div>
+            </div>
+            <div class="txn-stat">
+              <div class="ts-label">Total Spent</div>
+              <div class="ts-val r">-42,500</div>
+            </div>
+            <div class="txn-stat">
+              <div class="ts-label">Net</div>
+              <div class="ts-val" style="color:var(--text)">42,500</div>
+            </div>
+          </div>
+          <div class="txn-body">
+            <div class="txn-date-header">Today — Feb 20</div>
+            <div class="txn-item">
+              <div class="txn-icon ic-food">🍔</div>
+              <div class="txn-info">
+                <div class="txn-name">McDonald's</div>
+                <div class="txn-meta">2:30 PM · Food</div>
+              </div>
+              <div class="txn-amount">-850</div>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon ic-transport">🚖</div>
+              <div class="txn-info">
+                <div class="txn-name">Careem Ride</div>
+                <div class="txn-meta">10:15 AM · Transport</div>
+              </div>
+              <div class="txn-amount">-450</div>
+            </div>
+            <div class="txn-date-header">Yesterday — Feb 19</div>
+            <div class="txn-item">
+              <div class="txn-icon ic-transport">⛽</div>
+              <div class="txn-info">
+                <div class="txn-name">Fuel — PSO</div>
+                <div class="txn-meta">6:15 PM · Transport</div>
+              </div>
+              <div class="txn-amount">-3,200</div>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon ic-health">💊</div>
+              <div class="txn-info">
+                <div class="txn-name">Pharmacy</div>
+                <div class="txn-meta">4:00 PM · Health</div>
+              </div>
+              <div class="txn-amount">-1,200</div>
+            </div>
+            <div class="txn-date-header">Feb 18</div>
+            <div class="txn-item">
+              <div class="txn-icon ic-shopping">🛍</div>
+              <div class="txn-info">
+                <div class="txn-name">Daraz Order</div>
+                <div class="txn-meta">11:30 AM · Shopping</div>
+              </div>
+              <div class="txn-amount">-4,500</div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><div class="nav-label">Home</div></div>
+            <div class="nav-item active"><span class="nav-icon">📋</span><div class="nav-label" style="color:var(--purple)">History</div></div>
+            <div class="nav-item"><span class="nav-icon">📊</span><div class="nav-label">Reports</div></div>
+            <div class="nav-item"><span class="nav-icon">🤖</span><div class="nav-label">AI Chat</div></div>
+            <div class="nav-item"><span class="nav-icon">⚙️</span><div class="nav-label">Settings</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 6: REPORTS -->
+    <div>
+      <div class="phone-label"><span class="num">6</span><span class="name">Reports & Statistics</span></div>
+      <div class="phone">
+        <div class="status-bar light">
+          <span>9:41</span><div class="status-icons" style="color:var(--text)">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="reports-header">
+            <h2>Reports</h2>
+            <div class="period-tabs">
+              <div class="period-tab">Week</div>
+              <div class="period-tab active">Month</div>
+              <div class="period-tab">Quarter</div>
+              <div class="period-tab">Year</div>
+            </div>
+          </div>
+          <div class="reports-body">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="sc-label">Total Income</div>
+                <div class="sc-val" style="color:var(--green)">85,000</div>
+                <div class="sc-change up">↑ 12% vs last month</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-label">Total Spent</div>
+                <div class="sc-val" style="color:var(--red)">42,500</div>
+                <div class="sc-change down">↑ 8% vs last month</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-label">Net Savings</div>
+                <div class="sc-val">42,500</div>
+                <div class="sc-change up">↑ 5% vs last month</div>
+              </div>
+              <div class="stat-card">
+                <div class="sc-label">Transactions</div>
+                <div class="sc-val">34</div>
+                <div class="sc-change" style="color:var(--gray)">This month</div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Income vs Expenses</div>
+              <div class="bar-chart">
+                <div class="bar-group"><div class="bar-pair"><div class="bar income" style="height:40px"></div><div class="bar expense" style="height:28px"></div></div><div class="bar-label">Sep</div></div>
+                <div class="bar-group"><div class="bar-pair"><div class="bar income" style="height:50px"></div><div class="bar expense" style="height:35px"></div></div><div class="bar-label">Oct</div></div>
+                <div class="bar-group"><div class="bar-pair"><div class="bar income" style="height:45px"></div><div class="bar expense" style="height:30px"></div></div><div class="bar-label">Nov</div></div>
+                <div class="bar-group"><div class="bar-pair"><div class="bar income" style="height:55px"></div><div class="bar expense" style="height:40px"></div></div><div class="bar-label">Dec</div></div>
+                <div class="bar-group"><div class="bar-pair"><div class="bar income" style="height:48px"></div><div class="bar expense" style="height:36px"></div></div><div class="bar-label">Jan</div></div>
+                <div class="bar-group"><div class="bar-pair"><div class="bar income" style="height:60px"></div><div class="bar expense" style="height:42px"></div></div><div class="bar-label">Feb</div></div>
+              </div>
+              <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Income</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Expenses</div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Spending by Category</div>
+              <div class="pie-section">
+                <svg class="pie-visual" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="30" fill="none" stroke="#E5E7EB" stroke-width="16"/>
+                  <circle cx="40" cy="40" r="30" fill="none" stroke="var(--purple)" stroke-width="16" stroke-dasharray="56.5 188.5" stroke-dashoffset="0" transform="rotate(-90 40 40)"/>
+                  <circle cx="40" cy="40" r="30" fill="none" stroke="var(--green)" stroke-width="16" stroke-dasharray="30.2 188.5" stroke-dashoffset="-56.5" transform="rotate(-90 40 40)"/>
+                  <circle cx="40" cy="40" r="30" fill="none" stroke="var(--gold)" stroke-width="16" stroke-dasharray="26.4 188.5" stroke-dashoffset="-86.7" transform="rotate(-90 40 40)"/>
+                  <circle cx="40" cy="40" r="30" fill="none" stroke="#9CA3AF" stroke-width="16" stroke-dasharray="18.9 188.5" stroke-dashoffset="-113.1" transform="rotate(-90 40 40)"/>
+                </svg>
+                <div class="pie-legend">
+                  <div class="pie-item"><div class="pie-name"><div class="pie-dot" style="background:var(--purple)"></div>Food</div><div class="pie-pct">30%</div></div>
+                  <div class="pie-item"><div class="pie-name"><div class="pie-dot" style="background:var(--green)"></div>Transport</div><div class="pie-pct">16%</div></div>
+                  <div class="pie-item"><div class="pie-name"><div class="pie-dot" style="background:var(--gold)"></div>Shopping</div><div class="pie-pct">14%</div></div>
+                  <div class="pie-item"><div class="pie-name"><div class="pie-dot" style="background:#9CA3AF"></div>Others</div><div class="pie-pct">10%</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><div class="nav-label">Home</div></div>
+            <div class="nav-item"><span class="nav-icon">📋</span><div class="nav-label">History</div></div>
+            <div class="nav-item active"><span class="nav-icon">📊</span><div class="nav-label" style="color:var(--purple)">Reports</div></div>
+            <div class="nav-item"><span class="nav-icon">🤖</span><div class="nav-label">AI Chat</div></div>
+            <div class="nav-item"><span class="nav-icon">⚙️</span><div class="nav-label">Settings</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 3: Screens 7–9 -->
+  <div class="section-label">AI, Settings & Premium</div>
+  <div class="phones-row">
+
+    <!-- SCREEN 7: AI CHAT -->
+    <div>
+      <div class="phone-label"><span class="num">7</span><span class="name">AI Budget Assistant</span></div>
+      <div class="phone">
+        <div class="status-bar" style="background:var(--purple);">
+          <span>9:41</span><div class="status-icons">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="ai-header">
+            <div class="ai-avatar">🤖</div>
+            <div class="ai-info">
+              <div class="ai-name">PocketAI Assistant</div>
+              <div class="ai-status">Online · Powered by Gemini</div>
+            </div>
+            <div class="ai-menu">⋮</div>
+          </div>
+          <div class="ai-body">
+            <div class="alert-banner">
+              <div class="alert-title">⚠️ Budget Alert</div>
+              <div class="alert-text">Your Shopping budget is 92% used with 10 days left this month. Want tips to cut back?</div>
+            </div>
+            <div class="msg-bubble bot">
+              <div class="bubble bot">Hi Ahmed! 👋 I've analyzed your spending this month. You're doing great on food, but shopping is getting close to the limit. Want me to suggest some ways to save?</div>
+              <div class="msg-time">9:30 AM</div>
+            </div>
+            <div class="msg-bubble user">
+              <div class="bubble user">Yes please! Where can I save the most money?</div>
+              <div class="msg-time">9:31 AM</div>
+            </div>
+            <div class="msg-bubble bot">
+              <div class="bubble bot">
+                Based on your data, here are 3 quick wins:<br><br>
+                <span class="highlight">🛍 Shopping:</span> You've spent 9,200/10,000 this month. Delay non-essential purchases until next month.<br><br>
+                <span class="highlight">🍔 Food:</span> You can save ~1,500 by reducing dining out to 3x/week.
+              </div>
+              <div class="msg-time">9:31 AM</div>
+            </div>
+            <div class="quick-prompts">
+              <div class="qp-chip">Where am I overspending?</div>
+              <div class="qp-chip">How to reach savings goal?</div>
+              <div class="qp-chip">Monthly summary</div>
+            </div>
+          </div>
+          <div class="ai-input">
+            <input type="text" placeholder="Ask anything or log a transaction...">
+            <div class="send-btn">➤</div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><div class="nav-label">Home</div></div>
+            <div class="nav-item"><span class="nav-icon">📋</span><div class="nav-label">History</div></div>
+            <div class="nav-item"><span class="nav-icon">📊</span><div class="nav-label">Reports</div></div>
+            <div class="nav-item active"><span class="nav-icon">🤖</span><div class="nav-label" style="color:var(--purple)">AI Chat</div></div>
+            <div class="nav-item"><span class="nav-icon">⚙️</span><div class="nav-label">Settings</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 8: SETTINGS -->
+    <div>
+      <div class="phone-label"><span class="num">8</span><span class="name">Settings & Profile</span></div>
+      <div class="phone">
+        <div class="status-bar light">
+          <span>9:41</span><div class="status-icons" style="color:var(--text)">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="settings-header">
+            <h2>Settings</h2>
+          </div>
+          <div class="profile-card">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-info">
+              <div class="profile-name">Ahmed Khan</div>
+              <div class="profile-email">ahmed@email.com</div>
+              <div class="plan-badge">FREE PLAN</div>
+            </div>
+            <button class="edit-btn">Edit</button>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-label">Account</div>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-icon">👤</div>
+                <div class="settings-text">
+                  <div class="settings-name">Edit Profile</div>
+                  <div class="settings-desc">Name, email, phone</div>
+                </div>
+                <div class="settings-arrow">›</div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-icon">🔒</div>
+                <div class="settings-text">
+                  <div class="settings-name">Change Password</div>
+                  <div class="settings-desc">Update your password</div>
+                </div>
+                <div class="settings-arrow">›</div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-icon">💰</div>
+                <div class="settings-text">
+                  <div class="settings-name">Currency</div>
+                  <div class="settings-desc">Pakistani Rupee (PKR)</div>
+                </div>
+                <div class="settings-arrow">›</div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-section-label">Privacy & Security</div>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-icon">👁</div>
+                <div class="settings-text">
+                  <div class="settings-name">Hide Balance</div>
+                  <div class="settings-desc">Mask amounts on dashboard</div>
+                </div>
+                <div class="toggle"></div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-icon">🔐</div>
+                <div class="settings-text">
+                  <div class="settings-name">App Lock</div>
+                  <div class="settings-desc">Biometric / PIN lock</div>
+                </div>
+                <div class="toggle off"></div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-icon">🛡</div>
+                <div class="settings-text">
+                  <div class="settings-name">Privacy Policy</div>
+                  <div class="settings-desc">How we use your data</div>
+                </div>
+                <div class="settings-arrow">›</div>
+              </div>
+            </div>
+          </div>
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🏠</span><div class="nav-label">Home</div></div>
+            <div class="nav-item"><span class="nav-icon">📋</span><div class="nav-label">History</div></div>
+            <div class="nav-item"><span class="nav-icon">📊</span><div class="nav-label">Reports</div></div>
+            <div class="nav-item"><span class="nav-icon">🤖</span><div class="nav-label">AI Chat</div></div>
+            <div class="nav-item active"><span class="nav-icon">⚙️</span><div class="nav-label" style="color:var(--purple)">Settings</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 9: PREMIUM -->
+    <div>
+      <div class="phone-label"><span class="num">9</span><span class="name">Premium / Subscription</span></div>
+      <div class="phone">
+        <div class="status-bar dark">
+          <span>9:41</span><div class="status-icons">📶🔋</div>
+        </div>
+        <div class="screen">
+          <div class="premium-header">
+            <span class="crown">👑</span>
+            <div class="premium-title">Go <span>Premium</span></div>
+            <div class="premium-sub">Unlock the full power of Pocket Plan</div>
+          </div>
+          <div class="premium-body">
+            <div class="plan-card">
+              <div class="plan-name">Free</div>
+              <div class="plan-price">PKR 0 <span>/month</span></div>
+              <div class="plan-features">
+                <div class="pf-item"><span class="pf-check">✅</span> Basic transaction tracking</div>
+                <div class="pf-item"><span class="pf-check">✅</span> 3 months history</div>
+                <div class="pf-item"><span class="pf-check">✅</span> Basic reports</div>
+                <div class="pf-item"><span class="pf-cross">❌</span> AI Chatbot</div>
+                <div class="pf-item"><span class="pf-cross">❌</span> Export reports</div>
+              </div>
+            </div>
+            <div class="plan-card popular">
+              <div class="plan-name">Monthly</div>
+              <div class="plan-price">PKR 499 <span>/month</span></div>
+              <div class="plan-features">
+                <div class="pf-item"><span class="pf-check">✅</span> Everything in Free</div>
+                <div class="pf-item"><span class="pf-check">✅</span> Unlimited history</div>
+                <div class="pf-item"><span class="pf-check">✅</span> AI Budget Assistant</div>
+                <div class="pf-item"><span class="pf-check">✅</span> PDF/CSV exports</div>
+                <div class="pf-item"><span class="pf-check">✅</span> Multiple budget profiles</div>
+              </div>
+              <button class="btn-premium">Get Monthly</button>
+            </div>
+            <div class="plan-card yearly">
+              <div class="plan-name">Yearly <span class="save-badge">SAVE 40%</span></div>
+              <div class="plan-price">PKR 3,499 <span>/year</span></div>
+              <div class="plan-features">
+                <div class="pf-item"><span class="pf-check">✅</span> Everything in Monthly</div>
+                <div class="pf-item"><span class="pf-check">✅</span> Priority AI responses</div>
+                <div class="pf-item"><span class="pf-check">✅</span> Advanced analytics</div>
+              </div>
+              <button class="btn-premium btn-gold">Get Yearly — Best Value</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- COLOR SYSTEM -->
+<div class="color-system">
+  <div class="cs-title">Color System</div>
+  <div class="cs-chips">
+    <div class="cs-chip"><div class="cs-dot" style="background:#6C63FF"></div><span class="cs-label">Primary Purple — Brand & CTAs</span></div>
+    <div class="cs-chip"><div class="cs-dot" style="background:#22C55E"></div><span class="cs-label">Accent Green — Income & Savings</span></div>
+    <div class="cs-chip"><div class="cs-dot" style="background:#EF4444"></div><span class="cs-label">Danger Red — Expenses & Alerts</span></div>
+    <div class="cs-chip"><div class="cs-dot" style="background:#F97316"></div><span class="cs-label">Warning Orange — Near Limit</span></div>
+    <div class="cs-chip"><div class="cs-dot" style="background:#F59E0B"></div><span class="cs-label">Gold — Premium Features</span></div>
+    <div class="cs-chip"><div class="cs-dot" style="background:#E8E9F8"></div><span class="cs-label">Light Blue — Background</span></div>
+  </div>
+</div>
+
+<div class="page-footer">
+  Pocket Plan Wireframes · Team CPS · Sprint 0 · v1.0 · Feb 2026
+</div>
+
+</body>
+</html>

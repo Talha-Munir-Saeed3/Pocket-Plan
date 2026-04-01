@@ -1,0 +1,29 @@
+# Environment
+.env
+.env.*
+
+# Node / Frontend
+node_modules/
+.expo/
+.expo-shared/
+web-build/
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Build outputs
+build/
+dist/
+
+# Logs
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
