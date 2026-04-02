@@ -119,13 +119,57 @@ export default function SignUpScreen() {
               <View style={styles.heroShapeA} />
               <View style={styles.heroShapeB} />
               <Animated.View style={[styles.heroGlowOrb, { transform: [{ translateY: glowY }] }]} />
+              <Animated.View
+                style={[
+                  styles.heroSparkRing,
+                  {
+                    opacity: glowY.interpolate({
+                      inputRange: [-8, 0],
+                      outputRange: [0.85, 0.55]
+                    }),
+                    transform: [
+                      {
+                        translateY: glowY.interpolate({
+                          inputRange: [-8, 0],
+                          outputRange: [1, -3]
+                        })
+                      },
+                      {
+                        scale: glowY.interpolate({
+                          inputRange: [-8, 0],
+                          outputRange: [1.04, 0.94]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.heroSparkDot,
+                  {
+                    opacity: glowY.interpolate({
+                      inputRange: [-8, 0],
+                      outputRange: [0.95, 0.6]
+                    }),
+                    transform: [
+                      {
+                        translateY: glowY.interpolate({
+                          inputRange: [-8, 0],
+                          outputRange: [-2, 2]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              />
 
               <View style={[styles.progressTrack, { backgroundColor: palette.progressTrack }]}>
                 <View style={[styles.progressFill, { width: progressWidth }]} />
               </View>
 
               <Text style={styles.heroEyebrow}>Create account</Text>
-              <Text style={styles.heroTitle}>start simple. grow with clarity.</Text>
+              <Text style={styles.heroTitle}>your finances, finally sorted.</Text>
               <Text style={styles.heroSub}>{step === 1 ? "Step 1 of 2: login details" : "Step 2 of 2: name and currency"}</Text>
             </LinearGradient>
           </View>
@@ -265,6 +309,25 @@ const styles = StyleSheet.create({
     top: 16,
     right: 14,
     backgroundColor: "rgba(194, 187, 255, 0.28)"
+  },
+  heroSparkRing: {
+    position: "absolute",
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    borderWidth: 1.6,
+    borderColor: "rgba(235, 238, 255, 0.55)",
+    right: 36,
+    bottom: 18
+  },
+  heroSparkDot: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(235, 238, 255, 0.85)",
+    right: 54,
+    bottom: 34
   },
   progressTrack: {
     height: 5,
