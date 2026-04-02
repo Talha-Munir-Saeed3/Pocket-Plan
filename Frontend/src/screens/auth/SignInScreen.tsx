@@ -116,7 +116,7 @@ export default function SignInScreen() {
 
               <Animated.View style={[styles.heroGlowOrb, { transform: [{ translateY: glowY }] }]} />
 
-              <Text style={styles.headline}>own your money, anywhere.</Text>
+              <Text style={styles.headline}>your money, finally organised.</Text>
               <Text style={styles.tagline}>Track budgets, spending, and savings in one place.</Text>
             </LinearGradient>
           </View>

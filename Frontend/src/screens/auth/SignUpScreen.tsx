@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -16,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_400Regular, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
+import worldCurrencies from "world-currencies";
 
 import GradientActionButton from "../../components/auth/GradientActionButton";
 import ScreenContainer from "../../components/common/screenContainer";
@@ -29,7 +32,9 @@ export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("PKR");
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
+  const [currencyQuery, setCurrencyQuery] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const glowY = useRef(new Animated.Value(0)).current;
 
@@ -61,8 +66,6 @@ export default function SignUpScreen() {
     animation.start();
     return () => animation.stop();
   }, [glowY]);
-
-  if (!fontsLoaded) return null;
 
   const isDark = colorScheme !== "light";
 
@@ -96,10 +99,67 @@ export default function SignUpScreen() {
         chipBorder: "#DCDDF8"
       };
 
-  const currencies = ["USD", "EUR", "GBP", "PKR", "INR", "AED", "SAR", "JPY"];
+  const flagOverrides: Record<string, string> = {
+    EUR: "EU",
+    XCD: "AG",
+    XOF: "SN",
+    XAF: "CM",
+    XPF: "PF"
+  };
+
+  const toFlag = (countryCode: string) => {
+    const normalized = countryCode.toUpperCase();
+    if (!/^[A-Z]{2}$/.test(normalized)) return "🌐";
+    return String.fromCodePoint(...normalized.split("").map((char) => char.charCodeAt(0) + 127397));
+  };
+
+  const currencyEntries = useMemo(() => {
+    const data = worldCurrencies as Record<
+      string,
+      {
+        name?: string;
+        units?: {
+          major?: {
+            symbol?: string;
+          };
+        };
+      }
+    >;
+
+    return Object.entries(data)
+      .map(([code, detail]) => {
+        const countryCode = flagOverrides[code] ?? code.slice(0, 2);
+        return {
+          code,
+          name: detail?.name ?? code,
+          symbol: detail?.units?.major?.symbol ?? "",
+          flag: toFlag(countryCode)
+        };
+      })
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, []);
+
+  const filteredCurrencies = useMemo(() => {
+    const query = currencyQuery.trim().toLowerCase();
+    if (!query) return currencyEntries;
+    return currencyEntries.filter(
+      (item) =>
+        item.code.toLowerCase().includes(query) ||
+        item.name.toLowerCase().includes(query) ||
+        item.symbol.toLowerCase().includes(query)
+    );
+  }, [currencyEntries, currencyQuery]);
+
+  const selectedCurrency = useMemo(
+    () => currencyEntries.find((item) => item.code === currency) ?? currencyEntries[0],
+    [currency, currencyEntries]
+  );
+
   const stepOneValid = email.includes("@") && password.length >= 8;
   const stepTwoValid = name.trim().length > 1;
   const progressWidth = step === 1 ? "50%" : "100%";
+
+  if (!fontsLoaded) return null;
 
   return (
     <ScreenContainer style={{ backgroundColor: "#5C5CDB" }} edges={["left", "right"]}>
@@ -119,20 +179,64 @@ export default function SignUpScreen() {
               <View style={styles.heroShapeA} />
               <View style={styles.heroShapeB} />
               <Animated.View style={[styles.heroGlowOrb, { transform: [{ translateY: glowY }] }]} />
+              <Animated.View
+                style={[
+                  styles.heroSparkRing,
+                  {
+                    opacity: glowY.interpolate({
+                      inputRange: [-8, 0],
+                      outputRange: [0.85, 0.55]
+                    }),
+                    transform: [
+                      {
+                        translateY: glowY.interpolate({
+                          inputRange: [-8, 0],
+                          outputRange: [1, -3]
+                        })
+                      },
+                      {
+                        scale: glowY.interpolate({
+                          inputRange: [-8, 0],
+                          outputRange: [1.04, 0.94]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.heroSparkDot,
+                  {
+                    opacity: glowY.interpolate({
+                      inputRange: [-8, 0],
+                      outputRange: [0.95, 0.6]
+                    }),
+                    transform: [
+                      {
+                        translateY: glowY.interpolate({
+                          inputRange: [-8, 0],
+                          outputRange: [-2, 2]
+                        })
+                      }
+                    ]
+                  }
+                ]}
+              />
 
               <View style={[styles.progressTrack, { backgroundColor: palette.progressTrack }]}>
                 <View style={[styles.progressFill, { width: progressWidth }]} />
               </View>
 
               <Text style={styles.heroEyebrow}>Create account</Text>
-              <Text style={styles.heroTitle}>start simple. grow with clarity.</Text>
+              <Text style={styles.heroTitle}>your finances, finally sorted.</Text>
               <Text style={styles.heroSub}>{step === 1 ? "Step 1 of 2: login details" : "Step 2 of 2: name and currency"}</Text>
             </LinearGradient>
           </View>
 
           <View style={[styles.formWrap, { backgroundColor: palette.panelBg }]}>
             {step === 1 ? (
-              <View>
+              <View style={styles.stepOneWrap}>
                 <Text style={[styles.fieldLabel, { color: palette.muted }]}>Email</Text>
                 <View style={[styles.fieldBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
                   <TextInput
@@ -177,26 +281,15 @@ export default function SignUpScreen() {
                 </View>
 
                 <Text style={[styles.currencyLabel, { color: palette.muted }]}>Choose your primary currency</Text>
-                <View style={styles.currencyGrid}>
-                  {currencies.map((item) => {
-                    const selected = currency === item;
-                    return (
-                      <Pressable
-                        key={item}
-                        onPress={() => setCurrency(item)}
-                        style={[
-                          styles.currencyChip,
-                          {
-                            backgroundColor: selected ? "#5C5CDB" : palette.chipBg,
-                            borderColor: selected ? "#5C5CDB" : palette.chipBorder
-                          }
-                        ]}
-                      >
-                        <Text style={[styles.currencyChipText, { color: selected ? "#FFFFFF" : palette.text }]}>{item}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                <Pressable
+                  style={[styles.currencyPickerField, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}
+                  onPress={() => setCurrencyModalVisible(true)}
+                >
+                  <Text style={[styles.currencyPickerText, { color: palette.text }]}>
+                    {selectedCurrency ? `${selectedCurrency.flag}  ${selectedCurrency.code} — ${selectedCurrency.name}` : "Select currency"}
+                  </Text>
+                  <Text style={[styles.currencyPickerChevron, { color: palette.muted }]}>▼</Text>
+                </Pressable>
 
                 <View style={styles.stepTwoActions}>
                   <Pressable onPress={() => setStep(1)} style={styles.backButton}>
@@ -214,6 +307,68 @@ export default function SignUpScreen() {
               <Text style={[styles.switchText, { color: palette.muted }]}>Already have an account? </Text>
               <Text style={styles.switchCta}>Sign In</Text>
             </Pressable>
+
+            <Modal
+              visible={currencyModalVisible}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setCurrencyModalVisible(false)}
+            >
+              <View style={styles.modalRoot}>
+                <Pressable style={styles.modalBackdrop} onPress={() => setCurrencyModalVisible(false)} />
+
+                <View style={[styles.currencySheet, { backgroundColor: palette.panelBg }]}> 
+                  <View style={[styles.sheetHandle, { backgroundColor: palette.inputBorder }]} />
+
+                  <Text style={[styles.sheetTitle, { color: palette.text }]}>Select Currency</Text>
+
+                  <TextInput
+                    value={currencyQuery}
+                    onChangeText={setCurrencyQuery}
+                    placeholder="Search code, name, or symbol"
+                    placeholderTextColor="rgba(148, 163, 184, 0.9)"
+                    style={[styles.searchInput, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder, color: palette.text }]}
+                  />
+
+                  <FlatList
+                    data={filteredCurrencies}
+                    keyExtractor={(item) => item.code}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({ item }) => {
+                      const selected = item.code === currency;
+                      return (
+                        <Pressable
+                          onPress={() => {
+                            setCurrency(item.code);
+                            setCurrencyModalVisible(false);
+                            setCurrencyQuery("");
+                          }}
+                          style={[
+                            styles.currencyRow,
+                            {
+                              backgroundColor: selected ? "rgba(92, 92, 219, 0.14)" : "transparent",
+                              borderColor: selected ? "#5C5CDB" : palette.inputBorder
+                            }
+                          ]}
+                        >
+                          <View style={styles.currencyLeftCol}>
+                            <Text style={styles.currencyFlag}>{item.flag}</Text>
+                            <View>
+                              <Text style={[styles.currencyCodeName, { color: palette.text }]}>
+                                {item.code}  {item.name}
+                              </Text>
+                            </View>
+                          </View>
+
+                          <Text style={[styles.currencySymbol, { color: palette.muted }]}>{item.symbol || item.code}</Text>
+                        </Pressable>
+                      );
+                    }}
+                  />
+                </View>
+              </View>
+            </Modal>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -226,7 +381,8 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scroll: {
-    paddingBottom: 22
+    paddingBottom: 12,
+    flexGrow: 1
   },
   heroWrap: {
     minHeight: "34%"
@@ -266,6 +422,25 @@ const styles = StyleSheet.create({
     right: 14,
     backgroundColor: "rgba(194, 187, 255, 0.28)"
   },
+  heroSparkRing: {
+    position: "absolute",
+    width: 42,
+    height: 42,
+    borderRadius: 999,
+    borderWidth: 1.6,
+    borderColor: "rgba(235, 238, 255, 0.55)",
+    right: 36,
+    bottom: 18
+  },
+  heroSparkDot: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(235, 238, 255, 0.85)",
+    right: 54,
+    bottom: 34
+  },
   progressTrack: {
     height: 5,
     borderRadius: 999,
@@ -297,10 +472,15 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_400Regular"
   },
   formWrap: {
-    marginTop: -8,
+    marginTop: -2,
     marginHorizontal: 14,
     borderRadius: 24,
-    padding: 16
+    padding: 16,
+    paddingTop: 26,
+    paddingBottom: 44
+  },
+  stepOneWrap: {
+    marginTop: 0
   },
   fieldLabel: {
     fontSize: 13,
@@ -337,23 +517,89 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontFamily: "Sora_600SemiBold"
   },
-  currencyGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 14
-  },
-  currencyChip: {
-    minWidth: 68,
-    minHeight: 40,
-    borderRadius: 12,
+  currencyPickerField: {
+    minHeight: 56,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 14,
+    marginBottom: 14,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "space-between"
   },
-  currencyChipText: {
+  currencyPickerText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Sora_600SemiBold"
+  },
+  currencyPickerChevron: {
+    marginLeft: 10,
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  modalRoot: {
+    flex: 1,
+    justifyContent: "flex-end"
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.35)"
+  },
+  currencySheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 20,
+    maxHeight: "74%"
+  },
+  sheetHandle: {
+    width: 46,
+    height: 4,
+    borderRadius: 999,
+    alignSelf: "center",
+    marginBottom: 10
+  },
+  sheetTitle: {
+    fontSize: 16,
+    marginBottom: 10,
+    fontFamily: "Sora_700Bold"
+  },
+  searchInput: {
+    minHeight: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    marginBottom: 10,
+    fontFamily: "Sora_400Regular"
+  },
+  currencyRow: {
+    borderWidth: 1,
+    borderRadius: 14,
+    minHeight: 54,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  currencyLeftCol: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1
+  },
+  currencyFlag: {
+    fontSize: 18,
+    marginRight: 10
+  },
+  currencyCodeName: {
     fontSize: 13,
+    fontFamily: "Sora_600SemiBold"
+  },
+  currencySymbol: {
+    fontSize: 14,
+    marginLeft: 10,
     fontFamily: "Sora_700Bold"
   },
   stepTwoActions: {
