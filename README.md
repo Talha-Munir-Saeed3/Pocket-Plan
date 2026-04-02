@@ -17,7 +17,19 @@ Copy `.env.example` to `.env` and fill real values when needed.
 
 ## Current Focus
 
-Frontend setup is initialized with React + TypeScript + Vite and Axios through a dedicated service layer.
+Frontend is now an Expo Router mobile app with a feature-grouped src structure.
+
+## Run Frontend
+
+1. Open terminal in Frontend.
+2. Install dependencies if needed.
+3. Start Expo in tunnel mode.
+
+```bash
+cd Frontend
+npm install
+npx expo start --tunnel
+```
 
 ## Axios And Security Audit
 
