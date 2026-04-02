@@ -114,7 +114,7 @@ export default function SignUpScreen() {
               colors={["#171936", "#5C5CDB"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={[styles.heroGradient, { paddingTop: insets.top + 24 }]}
+              style={[styles.heroGradient, { paddingTop: insets.top + 48 }]}
             >
               <View style={styles.heroShapeA} />
               <View style={styles.heroShapeB} />
@@ -125,7 +125,7 @@ export default function SignUpScreen() {
               </View>
 
               <Text style={styles.heroEyebrow}>Create account</Text>
-              <Text style={styles.heroTitle}>start simple, stay focused.</Text>
+              <Text style={styles.heroTitle}>start simple. grow with clarity.</Text>
               <Text style={styles.heroSub}>{step === 1 ? "Step 1 of 2: login details" : "Step 2 of 2: name and currency"}</Text>
             </LinearGradient>
           </View>
