@@ -8,19 +8,21 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_400Regular, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 
-import AnimatedTextField from "../../components/auth/AnimatedTextField";
 import GradientActionButton from "../../components/auth/GradientActionButton";
 import ScreenContainer from "../../components/common/screenContainer";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +54,7 @@ export default function SignInScreen() {
         ghostText: "#ECECFF"
       }
     : {
-        screenBg: "#F7F6FF",
+      screenBg: "#ECE8FF",
         panelBg: "#FFFFFF",
         text: "#0F0F1A",
         muted: "#666C84",
@@ -91,7 +93,7 @@ export default function SignInScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <ScreenContainer>
+    <ScreenContainer style={{ backgroundColor: "#5C5CDB" }} edges={["left", "right"]}>
       {/* Root keyboard-safe container */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -100,12 +102,12 @@ export default function SignInScreen() {
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Hero Section: bold asymmetric brand moment */}
-          <View style={styles.heroWrap}>
+          <View style={[styles.heroWrap, { marginTop: -insets.top - 4 }]}> 
             <LinearGradient
               colors={["#5C5CDB", "#4636A8"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.heroGradient}
+              style={[styles.heroGradient, { paddingTop: insets.top + 60 }]}
             >
               <View style={styles.geoCircleA} />
               <View style={styles.geoCircleB} />
@@ -114,31 +116,40 @@ export default function SignInScreen() {
 
               <Animated.View style={[styles.heroGlowOrb, { transform: [{ translateY: glowY }] }]} />
 
-              <Text style={styles.headline}>smart money starts here.</Text>
-              <Text style={styles.tagline}>Your smart finance companion</Text>
+              <Text style={styles.headline}>own your money, anywhere.</Text>
+              <Text style={styles.tagline}>Track budgets, spending, and savings in one place.</Text>
             </LinearGradient>
           </View>
 
           {/* Form Section: clean, premium, minimal */}
           <View style={[styles.formWrap, { backgroundColor: palette.panelBg }]}>
-            <AnimatedTextField
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              palette={palette}
-            />
+            <Text style={[styles.fieldLabel, { color: palette.muted }]}>Email</Text>
+            <View style={[styles.fieldBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={[styles.fieldInput, { color: palette.text }]}
+                placeholder="you@example.com"
+                placeholderTextColor="rgba(148, 163, 184, 0.9)"
+              />
+            </View>
 
-            <AnimatedTextField
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              palette={palette}
-              rightAccessory={<Text style={styles.eyeText}>{showPassword ? "Hide" : "Show"}</Text>}
-              rightAccessoryPress={() => setShowPassword((prev) => !prev)}
-            />
+            <Text style={[styles.fieldLabel, { color: palette.muted, marginTop: 8 }]}>Password</Text>
+            <View style={[styles.fieldBox, styles.passwordBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                style={[styles.fieldInput, { color: palette.text }]}
+                placeholder="Enter password"
+                placeholderTextColor="rgba(148, 163, 184, 0.9)"
+              />
+              <Pressable onPress={() => setShowPassword((prev) => !prev)}>
+                <Text style={styles.eyeText}>{showPassword ? "Hide" : "Show"}</Text>
+              </Pressable>
+            </View>
 
             <Pressable style={styles.forgotWrap} onPress={() => router.push("/(auth)/forgot-password") }>
               <Text style={[styles.forgotText, { color: "#7C7CEB" }]}>Forgot password?</Text>
@@ -176,18 +187,18 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scroll: {
-    paddingBottom: 22
+    paddingBottom: 12,
+    flexGrow: 1
   },
   heroWrap: {
-    minHeight: "40%"
+    minHeight: "34%"
   },
   heroGradient: {
     paddingHorizontal: 24,
     paddingTop: 28,
-    paddingBottom: 26,
+    paddingBottom: 18,
     borderBottomLeftRadius: 38,
-    borderBottomRightRadius: 20,
-    overflow: "hidden"
+    borderBottomRightRadius: 20
   },
   geoCircleA: {
     position: "absolute",
@@ -248,11 +259,35 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_400Regular"
   },
   formWrap: {
-    marginTop: -34,
+    marginTop: -24,
     marginHorizontal: 14,
     borderRadius: 24,
-    padding: 16,
-    paddingTop: 12
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    minHeight: 560
+  },
+  fieldLabel: {
+    fontSize: 13,
+    marginBottom: 6,
+    fontFamily: "Sora_600SemiBold"
+  },
+  fieldBox: {
+    minHeight: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    marginBottom: 6
+  },
+  passwordBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  fieldInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "Sora_400Regular"
   },
   eyeText: {
     color: "#A4A9CF",
