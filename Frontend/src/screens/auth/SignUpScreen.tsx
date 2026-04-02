@@ -176,7 +176,7 @@ export default function SignUpScreen() {
 
           <View style={[styles.formWrap, { backgroundColor: palette.panelBg }]}>
             {step === 1 ? (
-              <View>
+              <View style={styles.stepOneWrap}>
                 <Text style={[styles.fieldLabel, { color: palette.muted }]}>Email</Text>
                 <View style={[styles.fieldBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
                   <TextInput
@@ -270,7 +270,8 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scroll: {
-    paddingBottom: 22
+    paddingBottom: 12,
+    flexGrow: 1
   },
   heroWrap: {
     minHeight: "34%"
@@ -360,10 +361,15 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_400Regular"
   },
   formWrap: {
-    marginTop: -8,
+    marginTop: -2,
     marginHorizontal: 14,
     borderRadius: 24,
-    padding: 16
+    padding: 16,
+    paddingTop: 26,
+    paddingBottom: 44
+  },
+  stepOneWrap: {
+    marginTop: 0
   },
   fieldLabel: {
     fontSize: 13,
