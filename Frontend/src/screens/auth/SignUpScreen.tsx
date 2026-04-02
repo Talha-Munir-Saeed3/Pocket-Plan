@@ -1,37 +1,37 @@
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_400Regular, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 
-import AnimatedTextField from "../../components/auth/AnimatedTextField";
 import GradientActionButton from "../../components/auth/GradientActionButton";
 import ScreenContainer from "../../components/common/screenContainer";
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [income, setIncome] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const glowY = useRef(new Animated.Value(0)).current;
 
   const [fontsLoaded] = useFonts({
     Sora_400Regular,
@@ -39,6 +39,28 @@ export default function SignUpScreen() {
     Sora_700Bold,
     Sora_800ExtraBold
   });
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowY, {
+          toValue: -8,
+          duration: 2400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        }),
+        Animated.timing(glowY, {
+          toValue: 0,
+          duration: 2400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true
+        })
+      ])
+    );
+
+    animation.start();
+    return () => animation.stop();
+  }, [glowY]);
 
   if (!fontsLoaded) return null;
 
@@ -55,8 +77,9 @@ export default function SignUpScreen() {
         inputBorderActive: "#7C7CEB",
         label: "#A7ABCC",
         labelActive: "#D7D9F6",
-        error: "#EF4444",
-        progressTrack: "rgba(255,255,255,0.16)"
+        progressTrack: "rgba(255,255,255,0.16)",
+        chipBg: "rgba(255,255,255,0.06)",
+        chipBorder: "rgba(255,255,255,0.12)"
       }
     : {
         screenBg: "#F7F6FF",
@@ -68,156 +91,120 @@ export default function SignUpScreen() {
         inputBorderActive: "#7C7CEB",
         label: "#667085",
         labelActive: "#5C5CDB",
-        error: "#EF4444",
-        progressTrack: "#E5E7FF"
+        progressTrack: "#E5E7FF",
+        chipBg: "#F1F2FF",
+        chipBorder: "#DCDDF8"
       };
 
-  const stepOneValid = firstName.trim().length > 1 && lastName.trim().length > 1 && email.includes("@");
-  const passwordsMatch = password.length > 0 && password === confirmPassword;
-  const stepTwoValid =
-    phone.trim().length >= 10 && income.trim().length > 0 && password.length >= 8 && passwordsMatch && agreeToTerms;
-
-  const inlineError = useMemo(() => {
-    if (step !== 2) return "";
-    if (confirmPassword.length > 0 && !passwordsMatch) return "Passwords do not match.";
-    if (password.length > 0 && password.length < 8) return "Password must be at least 8 characters.";
-    return "";
-  }, [confirmPassword.length, password.length, passwordsMatch, step]);
-
+  const currencies = ["USD", "EUR", "GBP", "PKR", "INR", "AED", "SAR", "JPY"];
+  const stepOneValid = email.includes("@") && password.length >= 8;
+  const stepTwoValid = name.trim().length > 1;
   const progressWidth = step === 1 ? "50%" : "100%";
 
-  const goToStepTwo = () => {
-    if (!stepOneValid) return;
-    setStep(2);
-  };
-
-  const goToStepOne = () => {
-    setStep(1);
-  };
-
   return (
-    <ScreenContainer>
-      {/* Root keyboard-safe container */}
+    <ScreenContainer style={{ backgroundColor: "#5C5CDB" }} edges={["left", "right"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
         style={[styles.root, { backgroundColor: palette.screenBg }]}
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* Hero section with progress */}
-          <View style={styles.heroWrap}>
+          <View style={[styles.heroWrap, { marginTop: -insets.top }]}> 
             <LinearGradient
               colors={["#171936", "#5C5CDB"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.heroGradient}
+              style={[styles.heroGradient, { paddingTop: insets.top + 24 }]}
             >
               <View style={styles.heroShapeA} />
               <View style={styles.heroShapeB} />
+              <Animated.View style={[styles.heroGlowOrb, { transform: [{ translateY: glowY }] }]} />
 
               <View style={[styles.progressTrack, { backgroundColor: palette.progressTrack }]}>
                 <View style={[styles.progressFill, { width: progressWidth }]} />
               </View>
 
               <Text style={styles.heroEyebrow}>Create account</Text>
-              <Text style={styles.heroTitle}>let&apos;s set up your future.</Text>
-              <Text style={styles.heroSub}>{step === 1 ? "Step 1 of 2" : "Step 2 of 2"}</Text>
+              <Text style={styles.heroTitle}>start simple, stay focused.</Text>
+              <Text style={styles.heroSub}>{step === 1 ? "Step 1 of 2: login details" : "Step 2 of 2: name and currency"}</Text>
             </LinearGradient>
           </View>
 
-          {/* Step form section */}
           <View style={[styles.formWrap, { backgroundColor: palette.panelBg }]}>
             {step === 1 ? (
               <View>
-                <View style={styles.nameRow}>
-                  <View style={styles.nameCol}>
-                    <AnimatedTextField
-                      label="First Name"
-                      value={firstName}
-                      onChangeText={setFirstName}
-                      palette={palette}
-                    />
-                  </View>
-
-                  <View style={styles.nameCol}>
-                    <AnimatedTextField
-                      label="Last Name"
-                      value={lastName}
-                      onChangeText={setLastName}
-                      palette={palette}
-                    />
-                  </View>
+                <Text style={[styles.fieldLabel, { color: palette.muted }]}>Email</Text>
+                <View style={[styles.fieldBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={[styles.fieldInput, { color: palette.text }]}
+                    placeholder="you@example.com"
+                    placeholderTextColor="rgba(148, 163, 184, 0.9)"
+                  />
                 </View>
 
-                <AnimatedTextField
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  palette={palette}
-                />
+                <Text style={[styles.fieldLabel, { color: palette.muted, marginTop: 8 }]}>Password</Text>
+                <View style={[styles.fieldBox, styles.passwordBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
+                  <TextInput
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    style={[styles.fieldInput, { color: palette.text }]}
+                    placeholder="At least 8 characters"
+                    placeholderTextColor="rgba(148, 163, 184, 0.9)"
+                  />
+                  <Pressable onPress={() => setShowPassword((prev) => !prev)}>
+                    <Text style={styles.eyeText}>{showPassword ? "Hide" : "Show"}</Text>
+                  </Pressable>
+                </View>
 
-                <GradientActionButton label="Continue" onPress={goToStepTwo} disabled={!stepOneValid} />
+                <GradientActionButton label="Continue" onPress={() => setStep(2)} disabled={!stepOneValid} />
               </View>
             ) : (
               <View>
-                <AnimatedTextField
-                  label="Phone"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  palette={palette}
-                />
+                <Text style={[styles.fieldLabel, { color: palette.muted }]}>Full Name</Text>
+                <View style={[styles.fieldBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    style={[styles.fieldInput, { color: palette.text }]}
+                    placeholder="Your full name"
+                    placeholderTextColor="rgba(148, 163, 184, 0.9)"
+                  />
+                </View>
 
-                <AnimatedTextField
-                  label="Monthly Income (PKR)"
-                  value={income}
-                  onChangeText={setIncome}
-                  keyboardType="numeric"
-                  palette={palette}
-                />
-
-                <AnimatedTextField
-                  label="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  palette={palette}
-                  rightAccessory={<Text style={styles.eyeText}>{showPassword ? "Hide" : "Show"}</Text>}
-                  rightAccessoryPress={() => setShowPassword((prev) => !prev)}
-                />
-
-                <AnimatedTextField
-                  label="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  palette={palette}
-                  rightAccessory={<Text style={styles.eyeText}>{showConfirmPassword ? "Hide" : "Show"}</Text>}
-                  rightAccessoryPress={() => setShowConfirmPassword((prev) => !prev)}
-                />
-
-                {inlineError ? <Text style={[styles.errorText, { color: palette.error }]}>{inlineError}</Text> : null}
-
-                <Pressable style={styles.termsRow} onPress={() => setAgreeToTerms((prev) => !prev)}>
-                  <View style={[styles.termsBox, agreeToTerms && styles.termsBoxActive]}>
-                    {agreeToTerms ? <Text style={styles.termsTick}>✓</Text> : null}
-                  </View>
-                  <Text style={[styles.termsText, { color: palette.muted }]}>I agree to Terms and Privacy Policy.</Text>
-                </Pressable>
+                <Text style={[styles.currencyLabel, { color: palette.muted }]}>Choose your primary currency</Text>
+                <View style={styles.currencyGrid}>
+                  {currencies.map((item) => {
+                    const selected = currency === item;
+                    return (
+                      <Pressable
+                        key={item}
+                        onPress={() => setCurrency(item)}
+                        style={[
+                          styles.currencyChip,
+                          {
+                            backgroundColor: selected ? "#5C5CDB" : palette.chipBg,
+                            borderColor: selected ? "#5C5CDB" : palette.chipBorder
+                          }
+                        ]}
+                      >
+                        <Text style={[styles.currencyChipText, { color: selected ? "#FFFFFF" : palette.text }]}>{item}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
 
                 <View style={styles.stepTwoActions}>
-                  <Pressable onPress={goToStepOne} style={styles.backButton}>
+                  <Pressable onPress={() => setStep(1)} style={styles.backButton}>
                     <Text style={styles.backText}>Back</Text>
                   </Pressable>
 
                   <View style={styles.createBtnWrap}>
-                    <GradientActionButton
-                      label="Create Account"
-                      onPress={() => router.replace("/(tabs)")}
-                      disabled={!stepTwoValid}
-                    />
+                    <GradientActionButton label="Create Account" onPress={() => router.replace("/(tabs)")} disabled={!stepTwoValid} />
                   </View>
                 </View>
               </View>
@@ -246,7 +233,7 @@ const styles = StyleSheet.create({
   },
   heroGradient: {
     paddingHorizontal: 20,
-    paddingTop: 22,
+    paddingTop: 24,
     paddingBottom: 24,
     borderBottomLeftRadius: 34,
     borderBottomRightRadius: 12,
@@ -269,6 +256,15 @@ const styles = StyleSheet.create({
     bottom: -40,
     transform: [{ rotate: "-13deg" }],
     backgroundColor: "rgba(255,255,255,0.16)"
+  },
+  heroGlowOrb: {
+    position: "absolute",
+    width: 104,
+    height: 104,
+    borderRadius: 999,
+    top: 16,
+    right: 14,
+    backgroundColor: "rgba(194, 187, 255, 0.28)"
   },
   progressTrack: {
     height: 5,
@@ -306,12 +302,28 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 16
   },
-  nameRow: {
-    flexDirection: "row",
-    gap: 10
+  fieldLabel: {
+    fontSize: 13,
+    marginBottom: 6,
+    fontFamily: "Sora_600SemiBold"
   },
-  nameCol: {
-    flex: 1
+  fieldBox: {
+    minHeight: 56,
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    marginBottom: 6
+  },
+  passwordBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  fieldInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "Sora_400Regular"
   },
   eyeText: {
     color: "#A4A9CF",
@@ -319,40 +331,30 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_600SemiBold",
     marginLeft: 8
   },
-  errorText: {
-    marginTop: -4,
-    marginBottom: 8,
-    fontSize: 12,
+  currencyLabel: {
+    fontSize: 13,
+    marginTop: 8,
+    marginBottom: 10,
     fontFamily: "Sora_600SemiBold"
   },
-  termsRow: {
-    marginTop: 4,
-    marginBottom: 14,
+  currencyGrid: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 14
   },
-  termsBox: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
+  currencyChip: {
+    minWidth: 68,
+    minHeight: 40,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#7C7CEB",
+    paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center"
   },
-  termsBoxActive: {
-    backgroundColor: "#5C5CDB"
-  },
-  termsTick: {
-    color: "#FFFFFF",
-    fontSize: 10,
+  currencyChipText: {
+    fontSize: 13,
     fontFamily: "Sora_700Bold"
-  },
-  termsText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: "Sora_400Regular"
   },
   stepTwoActions: {
     flexDirection: "row",
