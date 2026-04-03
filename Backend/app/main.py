@@ -1,9 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.db.mongo import close_mongo_connection, connect_to_mongo
 from app.routers import health
 
-app = FastAPI(title="Pocket Plan Backend", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await connect_to_mongo()
+    yield
+    await close_mongo_connection()
+
+
+app = FastAPI(title="Pocket Plan Backend", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

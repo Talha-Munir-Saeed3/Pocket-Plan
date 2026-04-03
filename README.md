@@ -10,10 +10,14 @@ This repository uses a simple SaaS-oriented structure:
 
 ## Environment Files
 
-- `.env.example` contains placeholder keys and is safe to commit.
-- `.env` contains real secrets and must never be committed.
+- Each app keeps its own `.env.example` file with placeholders.
+- Real `.env` files contain secrets and must never be committed.
 
-Copy `.env.example` to `.env` and fill real values when needed.
+Copy the relevant app-level template to `.env` when needed:
+
+- `Backend/.env.example` -> `Backend/.env`
+- `Frontend/.env.example` -> `Frontend/.env` (if/when needed)
+- `Frontend-Admin/.env.example` -> `Frontend-Admin/.env` (if/when needed)
 
 ## Current Focus
 
