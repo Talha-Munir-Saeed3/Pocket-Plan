@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str = ""
     FIREBASE_PROJECT_ID: str = ""
     GEMINI_API_KEY: str = ""
+    MONGODB_URI: str = ""
+    MONGODB_DB_NAME: str = "pocket_plan"
 
 
 settings = Settings()

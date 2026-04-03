@@ -1,0 +1,449 @@
+=============================================================================
+POCKET PLAN — DATABASE SCHEMA DOCUMENTATION
+=============================================================================
+Database : MongoDB Atlas (AWS ap-south-1, Mumbai)
+ODM      : Beanie (Python)
+Backend  : FastAPI
+Version  : v1.0  |  Team CPS  |  Sprint 0
+=============================================================================
+
+COLLECTIONS (8 total):
+  1. users              — authentication only
+  2. user_profiles      — avatar & monthly income
+  3. user_preferences   — currency, theme, notifications
+  4. accounts           — personal + premium multi-accounts
+  5. transactions       — all money movements
+  6. budgets            — monthly budgets per account
+  7. chat_history       — AI chatbot conversations
+  8. subscriptions      — premium plan tracking
+
+=============================================================================
+QUICK REFERENCE — COLLECTION RELATIONSHIPS
+=============================================================================
+
+  user_profiles      →  users        (user_id → users._id)
+  user_preferences   →  users        (user_id → users._id)
+  accounts           →  users        (user_id → users._id)
+  transactions       →  users        (user_id → users._id)
+  transactions       →  accounts     (account_id → accounts._id)
+  transactions       →  accounts     (to_account_id → accounts._id) [transfer only]
+  transactions       →  transactions (parent_transaction_id) [recurring only]
+  budgets            →  users        (user_id → users._id)
+  budgets            →  accounts     (account_id → accounts._id)
+  chat_history       →  users        (user_id → users._id)
+  chat_history       →  accounts     (account_id → accounts._id) [optional]
+  subscriptions      →  users        (user_id → users._id)
+
+=============================================================================
+1. USERS
+=============================================================================
+Purpose  : Authentication only — keep this lean
+Created  : On signup step 1 (name, email, password)
+Rule     : Never store personal info here — that goes in user_profiles
+
+Fields:
+  full_name         String    Required  User's display name entered on signup
+  email             String    Required  Unique. Used for login. Validated as email format
+  hashed_password   String    Required  bcrypt hashed. Never store plain text passwords
+  is_active         Boolean   Default: true   False = account suspended or deactivated
+  is_verified       Boolean   Default: false  True once email verification link is clicked
+  google_id         String    Optional  Filled only when user signs up via Google OAuth
+  auth_provider     String    Default: "email"  Values: "email" or "google"
+  created_at        DateTime  Default: now()  UTC — set once on creation, never changed
+  updated_at        DateTime  Default: now()  UTC — updated on every document change
+
+=============================================================================
+2. USER_PROFILES
+=============================================================================
+Purpose  : Personal info — kept separate from auth (users collection)
+Created  : Automatically right after signup with defaults
+Linked   : user_id → users._id
+
+Fields:
+  user_id           String    Required  → Ref: users._id
+  avatar            Integer   Default: 1  Preset avatar number — 1, 2, or 3.
+                                          Frontend renders the matching image.
+                                          No custom image uploads.
+  monthly_income    Float     Optional  User fills later in settings if they want.
+                                        Used by AI chatbot for personalised advice.
+  created_at        DateTime  Default: now()  UTC — set once
+  updated_at        DateTime  Default: now()  UTC — updated on change
+
+NOT COLLECTED (intentionally excluded):
+  phone           — not needed in this app
+  date_of_birth   — not relevant
+  profile_picture — using preset avatars instead of custom uploads
+
+=============================================================================
+3. USER_PREFERENCES
+=============================================================================
+Purpose  : All app settings per user
+Created  : Automatically right after signup with sensible defaults
+Linked   : user_id → users._id
+
+Fields:
+  user_id                String    Required  → Ref: users._id
+
+  currency               String    Default: "PKR"
+                                   Full ISO 4217 code e.g. PKR, USD, GBP, AED.
+                                   Symbol is handled by the frontend using a
+                                   currency library. User selects on signup
+                                   step 2. Can change in settings anytime.
+
+  theme                  String    Default: "default"
+                                   Currently only "default" (brand purple #5C5CDB).
+                                   Multiple colour themes are PLANNED but not
+                                   implemented yet. Kept as a plain string so
+                                   new themes can be added without schema changes.
+
+  language               String    Default: "en"
+                                   Always English for now. Kept as a field for
+                                   future multi-language support. Do not change
+                                   until a translation system is built.
+
+  goal_progress_alerts   Boolean   Default: true
+                                   Push notification when savings goal hits
+                                   25%, 50%, 75%, and 100%.
+
+  monthly_summary        Boolean   Default: true
+                                   Push notification sent on 1st of every month
+                                   with the previous month's spending summary.
+
+  daily_reminder         Boolean   Default: true
+                                   Daily push notification reminding user to
+                                   log their transactions.
+
+  hide_balance           Boolean   Default: false
+                                   Masks all PKR amounts on dashboard with ****
+                                   when enabled. User toggles in settings.
+
+  created_at             DateTime  Default: now()  UTC — set once
+  updated_at             DateTime  Default: now()  UTC — updated on change
+
+NOT IMPLEMENTED YET:
+  app_lock — biometric / PIN lock feature. Planned for a later sprint.
+
+=============================================================================
+4. ACCOUNTS
+=============================================================================
+Purpose  : Supports multiple financial accounts per user
+Linked   : user_id → users._id
+
+Free users    : 1 account only (Personal, is_default=True)
+Premium users : Unlimited accounts (Personal + Travel + Business + Savings etc)
+
+Fields:
+  user_id              String    Required  → Ref: users._id
+
+  name                 String    Required  Display name e.g. "Personal", "Travel",
+                                           "Business"
+
+  type                 String    Required  Values:
+                                             "personal"
+                                             "travel"
+                                             "business"
+                                             "savings"
+                                             "other"
+
+  account_icon         Integer   Default: 1
+                                 Preset icon number — frontend maps to actual icon:
+                                   1 = 👛 Personal / Wallet
+                                   2 = 💼 Business / Briefcase
+                                   3 = ✈️  Travel / Plane
+                                   4 = 🏦 Savings / Bank
+                                   5 = 📦 Other / Box
+
+  color                String    Optional  Hex color for account card in UI
+                                           e.g. "#5C5CDB". If null, frontend
+                                           uses default purple.
+
+  is_default           Boolean   Default: false
+                                 Only one default account per user allowed.
+                                 The Personal account created on signup is
+                                 always the default.
+
+  is_premium_account   Boolean   Default: false
+                                 True for travel/business accounts.
+                                 If subscription expires, these accounts are
+                                 hidden from UI — NOT deleted.
+
+  balance              Float     Default: 0.0
+                                 Running total. Auto-updated by backend every
+                                 time a transaction is added, edited, or deleted.
+
+  currency             String    Default: "PKR"
+                                 Inherits from user_preferences.currency
+                                 at account creation time.
+
+  is_active            Boolean   Default: true
+                                 False = hidden from UI.
+                                 Used when premium expires — accounts hidden
+                                 not deleted so data is preserved.
+
+  created_at           DateTime  Default: now()  UTC — set once
+  updated_at           DateTime  Default: now()  UTC — updated on change
+
+=============================================================================
+5. TRANSACTIONS
+=============================================================================
+Purpose  : Every single money movement — the core collection of the app
+Linked   : user_id → users._id
+           account_id → accounts._id
+
+Fields:
+  user_id                  String    Required  → Ref: users._id
+
+  account_id               String    Required  → Ref: accounts._id
+                                               Which account this transaction
+                                               belongs to.
+
+  type                     String    Required  Values:
+                                                 "expense"   — money going out
+                                                 "income"    — money coming in
+                                                 "transfer"  — between own accounts
+                                                 "borrow"    — borrowed from someone
+                                                 "lend"      — lent to someone
+
+  amount                   Float     Required  Always positive. Type determines
+                                               direction (in or out).
+
+  currency                 String    Default: "PKR"
+                                     Inherits from account.currency.
+
+  category                 String    Optional  ONLY for expense type.
+                                               Null for income, transfer,
+                                               borrow, lend.
+                                               See full category list below.
+
+  description              String    Optional  Short label e.g. "McDonald's Meal"
+                                               or "Monthly Salary"
+
+  notes                    String    Optional  Extra detail added by user.
+                                               Free text, no format required.
+
+  date                     DateTime  Default: now()
+                                     Can be backdated — user may log a past
+                                     transaction they forgot. Stored as UTC.
+
+  to_account_id            String    Optional  → Ref: accounts._id
+                                               ONLY used when type = "transfer".
+                                               The destination account.
+
+  contact_name             String    Optional  Person's name.
+                                               ONLY used when type = "borrow"
+                                               or "lend".
+
+  is_recurring             Boolean   Default: false
+                                     True = this transaction repeats
+                                     automatically on a schedule.
+
+  recurring_frequency      String    Optional  Required if is_recurring = true.
+                                               Values: "daily", "weekly", "monthly"
+
+  parent_transaction_id    String    Optional  → Ref: transactions._id
+                                               Links auto-generated recurring
+                                               copies back to the original
+                                               transaction.
+
+  created_at               DateTime  Default: now()  UTC — set once
+  updated_at               DateTime  Default: now()  UTC — updated on change
+
+---------------------------------------------
+TRANSACTION TYPE — FIELD REQUIREMENTS
+---------------------------------------------
+  expense   category required      no extra fields
+  income    no category (null)     no extra fields — just amount + description
+  transfer  no category (null)     to_account_id required
+  borrow    no category (null)     contact_name required
+  lend      no category (null)     contact_name required
+
+---------------------------------------------
+EXPENSE CATEGORIES (20 total)
+---------------------------------------------
+  Value (stored in DB)    Frontend Icon   Description
+  --------------------    -------------   -----------
+  food                    🍔              Food & Dining — restaurants, cafes, takeaway
+  transport               🚗              Transport — fuel, Careem, rickshaw, bus
+  shopping                🛍              Shopping — general retail, Daraz, malls
+  rent                    🏠              Rent & Housing — monthly rent, mortgage
+  health                  💊              Health & Medical — pharmacy, hospital, doctor
+  entertainment           🎬              Entertainment — cinema, events, games
+  education               📚              Education — fees, books, courses, stationery
+  utilities               💡              Utilities — electricity, gas, water, internet, phone bill
+  travel                  ✈️              Travel — flights, hotels, trips (not daily transport)
+  business                💼              Business Expenses — work-related costs
+  personal_care           💇              Personal Care — salon, barber, grooming products
+  clothing                👕              Clothing & Fashion — clothes, shoes, accessories
+  groceries               🛒              Groceries — supermarket, sabzi mandi, kitchen supplies
+  subscriptions           📱              Subscriptions — Netflix, Spotify, software, apps
+  charity                 🤲              Charity & Donations — sadqah, zakat, NGO donations
+  repairs                 🔧              Repairs & Maintenance — home, car, appliance fixes
+  insurance               🛡              Insurance — health, car, home insurance payments
+  taxes                   📋              Taxes & Fees — government fees, withholding tax
+  gifts                   🎁              Gifts — presents bought for others
+  other                   ➕              Other / Uncategorized — anything not in list above
+
+NOTE ON INCOME:
+  Income transactions do NOT have subcategories.
+  type = "income" is enough — user just enters amount + description
+  e.g. description = "Monthly Salary" or "Freelance Payment"
+
+=============================================================================
+6. BUDGETS
+=============================================================================
+Purpose  : Monthly budget and savings goal tracking per account
+Created  : One document per user per account per month/year combination
+Linked   : user_id → users._id
+           account_id → accounts._id
+
+Fields:
+  user_id           String    Required  → Ref: users._id
+  account_id        String    Required  → Ref: accounts._id
+
+  month             Integer   Required  1–12. The month this budget covers.
+  year              Integer   Required  e.g. 2026. The year this budget covers.
+
+  total_budget      Float     Required  Overall monthly spending limit set by user.
+
+  total_spent       Float     Default: 0.0
+                              Auto-updated by backend on every expense transaction.
+                              Never edited manually by user.
+
+  savings_goal      Float     Optional  Monthly savings target e.g. 12000.
+                              Drives the goal_progress_alerts notifications
+                              (at 25%, 50%, 75%, 100%).
+
+  savings_current   Float     Default: 0.0
+                              Auto-updated — income minus expenses.
+                              Feeds the savings progress bar on dashboard.
+
+  category_limits   Array     Default: []
+                              Embedded list of CategoryLimit objects.
+                              Empty list = user has not set any category limits.
+                              See CategoryLimit fields below.
+
+  created_at        DateTime  Default: now()  UTC — set once
+  updated_at        DateTime  Default: now()  UTC — updated on change
+
+---------------------------------------------
+EMBEDDED OBJECT — CategoryLimit
+(inside the category_limits array in budgets)
+---------------------------------------------
+  category      String    Required  Must match a value from expense categories list.
+  limit         Float     Required  Max spend for this category this month e.g. 5000.0
+  spent         Float     Default: 0.0
+                          Auto-updated every time an expense transaction in this
+                          category is added, edited, or deleted.
+  alert_sent    Boolean   Default: false
+                          Set to true once the 80% spending alert notification
+                          has been sent. Prevents the same alert being sent
+                          multiple times for the same category.
+
+=============================================================================
+7. CHAT_HISTORY
+=============================================================================
+Purpose  : Stores full AI chatbot conversation history per user
+Linked   : user_id → users._id
+           account_id → accounts._id (optional)
+
+Fields:
+  user_id       String    Required  → Ref: users._id
+
+  account_id    String    Optional  → Ref: accounts._id
+                          Tells the AI which account's data to use for context
+                          e.g. if user is in Travel account, AI gives
+                          travel-specific spending advice.
+
+  messages      Array     Default: []
+                          Embedded list of Message objects (see below).
+                          Full list is sent to Gemini API on each new message
+                          so the AI has memory of the full conversation.
+
+  created_at    DateTime  Default: now()  UTC — set once
+  updated_at    DateTime  Default: now()  UTC — updated every time a message is added
+
+---------------------------------------------
+EMBEDDED OBJECT — Message
+(inside the messages array in chat_history)
+---------------------------------------------
+  role          String    Required  "user" = message from the person
+                                    "assistant" = response from Gemini AI
+  content       String    Required  The message text
+  timestamp     DateTime  Default: now()  UTC — when message was sent/received
+
+HOW GEMINI RECEIVES DATA:
+  Along with the full messages list, the backend also injects the user's
+  current financial context into the Gemini system prompt:
+    - Current account balance
+    - Total spent this month
+    - Budget used percentage
+    - Top 3 spending categories
+    - Savings goal and current progress
+  This gives the AI real data to give personalised advice.
+
+=============================================================================
+8. SUBSCRIPTIONS
+=============================================================================
+Purpose  : Tracks premium plan status per user
+Created  : One document per user (starts as "free" on signup)
+Linked   : user_id → users._id
+
+Fields:
+  user_id         String    Required  → Ref: users._id
+
+  plan            String    Required  Values:
+                                        "free"    — default, limited features
+                                        "monthly" — all features, billed monthly
+                                        "yearly"  — all features, billed yearly (40% cheaper)
+
+  status          String    Required  Values:
+                                        "active"    — subscription is live
+                                        "cancelled" — cancelled but access until expires_at
+                                        "expired"   — past expires_at, reverted to free
+
+  started_at      DateTime  Default: now()  UTC — when the subscription began
+
+  expires_at      DateTime  Optional  null for free plan.
+                            Set when monthly/yearly purchased.
+                            Access is revoked after this date.
+
+  revenuecat_id   String    Optional  RevenueCat transaction/purchase ID.
+                            Filled when payment is processed.
+                            Used to verify subscription and handle
+                            RevenueCat webhooks.
+
+PRICES NOT STORED HERE YET:
+  Monthly and yearly pricing will be managed on the RevenueCat dashboard.
+  Prices will NOT be hardcoded in the database.
+  Will be added when RevenueCat integration is built.
+
+=============================================================================
+PREMIUM vs FREE — FEATURE GATES
+=============================================================================
+
+  Feature                   Free                    Premium (Monthly / Yearly)
+  -------                   ----                    --------------------------
+  Number of accounts        1 (Personal only)       Unlimited
+  Transaction history       Last 3 months only      Unlimited
+  AI Budget Assistant       5 queries per day       Unlimited
+  Report export             Not available           PDF and CSV
+  Category budget limits    Basic (3 categories)    Unlimited categories
+  Account types             Personal only           Personal, Travel, Business, Savings
+
+=============================================================================
+CATEGORIES USED FOR BUDGETS vs TRANSACTIONS
+=============================================================================
+
+  The category field in transactions and the category field inside
+  category_limits (in budgets) use the exact same values.
+  This means budget tracking per category works by matching
+  the transaction.category string to the categoryLimit.category string.
+
+  Both must always use values from the 20 expense categories list above.
+  Income, transfer, borrow, and lend transactions are excluded from
+  budget category tracking since they do not have categories.
+
+=============================================================================
+END OF SCHEMA DOCUMENTATION
+Pocket Plan — Team CPS — Sprint 0 — v1.0
+=============================================================================
