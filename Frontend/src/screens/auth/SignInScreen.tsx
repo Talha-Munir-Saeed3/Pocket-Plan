@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   useColorScheme,
   View
 } from "react-native";
@@ -24,9 +25,13 @@ export default function SignInScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
+  const { width, height } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const glowY = useRef(new Animated.Value(0)).current;
 
   const [fontsLoaded] = useFonts({
@@ -90,6 +95,70 @@ export default function SignInScreen() {
     return () => animation.stop();
   }, [glowY]);
 
+  const normalizedEmail = email.trim();
+  const isSmallDevice = width < 370 || height < 760;
+  const formWidth = Math.min(width - 28, 460);
+
+  const validateCredentials = () => {
+    let valid = true;
+
+    if (!normalizedEmail) {
+      setEmailError("Email is required.");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setEmailError("Enter a valid email address.");
+      valid = false;
+    } else {
+      setEmailError("");
+    }
+
+    if (!password) {
+      setPasswordError("Password is required.");
+      valid = false;
+    } else if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
+      valid = false;
+    } else {
+      setPasswordError("");
+    }
+
+    return valid;
+  };
+
+  const handleSignIn = () => {
+    setIsSubmitted(true);
+    if (!validateCredentials()) {
+      return;
+    }
+    router.replace("/(tabs)");
+  };
+
+  const onEmailChange = (value: string) => {
+    setEmail(value);
+    if (isSubmitted) {
+      if (!value.trim()) {
+        setEmailError("Email is required.");
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
+        setEmailError("Enter a valid email address.");
+      } else {
+        setEmailError("");
+      }
+    }
+  };
+
+  const onPasswordChange = (value: string) => {
+    setPassword(value);
+    if (isSubmitted) {
+      if (!value) {
+        setPasswordError("Password is required.");
+      } else if (value.length < 8) {
+        setPasswordError("Password must be at least 8 characters.");
+      } else {
+        setPasswordError("");
+      }
+    }
+  };
+
   if (!fontsLoaded) return null;
 
   return (
@@ -116,18 +185,25 @@ export default function SignInScreen() {
 
               <Animated.View style={[styles.heroGlowOrb, { transform: [{ translateY: glowY }] }]} />
 
-              <Text style={styles.headline}>Your money,         Finally organised.</Text>
-              <Text style={styles.tagline}>Track budgets, spending, and savings in one place.</Text>
+              <Text
+                style={[
+                  styles.headline,
+                  { fontSize: isSmallDevice ? 30 : 36, lineHeight: isSmallDevice ? 34 : 40 }
+                ]}
+              >
+                Your money, finally organised.
+              </Text>
+              <Text style={[styles.tagline, { fontSize: isSmallDevice ? 13 : 14 }]}>Track budgets, spending, and savings in one place.</Text>
             </LinearGradient>
           </View>
 
           {/* Form Section: clean, premium, minimal */}
-          <View style={[styles.formWrap, { backgroundColor: palette.panelBg }]}>
+          <View style={[styles.formWrap, { backgroundColor: palette.panelBg, width: formWidth, minHeight: isSmallDevice ? 500 : 560 }]}>
             <Text style={[styles.fieldLabel, { color: palette.muted }]}>Email</Text>
             <View style={[styles.fieldBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
               <TextInput
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={onEmailChange}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 style={[styles.fieldInput, { color: palette.text }]}
@@ -135,12 +211,13 @@ export default function SignInScreen() {
                 placeholderTextColor="rgba(148, 163, 184, 0.9)"
               />
             </View>
+            {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
             <Text style={[styles.fieldLabel, { color: palette.muted, marginTop: 8 }]}>Password</Text>
             <View style={[styles.fieldBox, styles.passwordBox, { backgroundColor: palette.inputBg, borderColor: palette.inputBorder }]}> 
               <TextInput
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={onPasswordChange}
                 secureTextEntry={!showPassword}
                 style={[styles.fieldInput, { color: palette.text }]}
                 placeholder="Enter password"
@@ -150,12 +227,13 @@ export default function SignInScreen() {
                 <Text style={styles.eyeText}>{showPassword ? "Hide" : "Show"}</Text>
               </Pressable>
             </View>
+            {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
             <Pressable style={styles.forgotWrap} onPress={() => router.push("/(auth)/forgot-password") }>
               <Text style={[styles.forgotText, { color: "#7C7CEB" }]}>Forgot password?</Text>
             </Pressable>
 
-            <GradientActionButton label="Sign In" onPress={() => router.replace("/(tabs)")} />
+            <GradientActionButton label="Sign In" onPress={handleSignIn} />
 
             <View style={styles.dividerRow}>
               <View style={[styles.dividerLine, { backgroundColor: palette.hairline }]} />
@@ -261,6 +339,7 @@ const styles = StyleSheet.create({
   formWrap: {
     marginTop: -24,
     marginHorizontal: 14,
+    alignSelf: "center",
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 20,
@@ -349,5 +428,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#7C7CEB",
     fontFamily: "Sora_700Bold"
+  },
+  errorText: {
+    marginTop: -2,
+    marginBottom: 6,
+    color: "#EF4444",
+    fontSize: 12,
+    fontFamily: "Sora_600SemiBold"
   }
 });
