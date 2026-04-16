@@ -1,5 +1,3 @@
-import HistoryScreen from "../../src/screens/transactions/historyScreen";
-
-export default HistoryScreen;
+export { default } from "../../src/screens/transactions/historyScreen";
 
 

@@ -1,5 +1,3 @@
-import ReportsScreen from "../../src/screens/reports/reportsScreen";
-
-export default ReportsScreen;
+export { default } from "../../src/screens/reports/reportsScreen";
 
 

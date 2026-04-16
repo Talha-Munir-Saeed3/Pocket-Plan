@@ -1,5 +1,3 @@
-import DashboardScreen from "../../src/screens/home/dashboardScreen";
-
-export default DashboardScreen;
+export { default } from "../../src/screens/home/dashboardScreen";
 
 

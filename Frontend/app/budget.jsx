@@ -1,5 +1,3 @@
-import BudgetScreen from "../src/screens/budget/budgetScreen";
-
-export default BudgetScreen;
+export { default } from "../src/screens/budget/budgetScreen";
 
 

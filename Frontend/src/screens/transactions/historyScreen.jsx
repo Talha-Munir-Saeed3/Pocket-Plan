@@ -13,7 +13,7 @@ export default function HistoryScreen() {
         <TextInput style={appStyles.inputControl} placeholder="Search transactions" placeholderTextColor="#9CA3AF" />
 
         <View style={[appStyles.chipRow, { marginVertical: 14 }]}>
-          {['All', 'Expenses', 'Income', 'This Week'].map((filter) => (
+          {["All", "Expenses", "Income", "This Week"].map((filter) => (
             <View key={filter} style={appStyles.chip}>
               <Text style={appStyles.chipText}>{filter}</Text>
             </View>
@@ -36,4 +36,3 @@ export default function HistoryScreen() {
     </ScreenContainer>
   );
 }
-
