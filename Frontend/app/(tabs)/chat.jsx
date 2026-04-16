@@ -1,5 +1,3 @@
-import ChatScreen from "../../src/screens/ai/chatScreen";
-
-export default ChatScreen;
+export { default } from "../../src/screens/ai/chatScreen";
 
 

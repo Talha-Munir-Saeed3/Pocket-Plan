@@ -1,5 +1,3 @@
-import PremiumScreen from "../src/screens/premium/premiumScreen";
-
-export default PremiumScreen;
+export { default } from "../src/screens/premium/premiumScreen";
 
 

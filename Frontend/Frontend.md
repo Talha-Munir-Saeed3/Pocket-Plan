@@ -17,8 +17,6 @@ Pocket Plan mobile app lives in Frontend and is built with Expo Router.
 - Frontend/src/components: Reusable UI blocks.
   - common: Buttons, inputs, layout wrappers.
   - cards: Card-style display components.
-- Frontend/src/services: API and external service clients.
-- Frontend/src/config: App-level runtime configuration.
 - Frontend/src/styles: Shared style definitions.
 - Frontend/assets: App static assets.
 
