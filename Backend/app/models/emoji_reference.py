@@ -27,5 +27,8 @@ EXPENSE_CATEGORY_EMOJIS: dict[str, str] = {
     "insurance": "🛡",
     "taxes": "📋",
     "gifts": "🎁",
+    "sports": "⚽",
+    "equipment": "🧰",
+    "events": "🎟",
     "other": "➕",
 }

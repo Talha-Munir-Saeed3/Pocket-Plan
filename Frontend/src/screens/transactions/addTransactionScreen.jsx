@@ -29,6 +29,9 @@ const EXPENSE_CATEGORY_EMOJIS = {
   insurance: "🛡",
   taxes: "📋",
   gifts: "🎁",
+  sports: "⚽",
+  equipment: "🧰",
+  events: "🎟",
   other: "➕"
 };
 
@@ -39,6 +42,10 @@ const INCOME_CATEGORY_EMOJIS = {
   bonus: "🎉",
   refund: "↩️",
   investment: "🏦",
+  rental_income: "🏠",
+  side_hustle: "🛠",
+  commission: "🧾",
+  dividend: "📊",
   gift: "🎁",
   interest: "💹",
   other: "➕"
@@ -51,6 +58,9 @@ const TRANSFER_CATEGORY_EMOJIS = {
   cash_withdrawal: "🏧",
   cash_deposit: "💵",
   currency_exchange: "💱",
+  card_payment: "💳",
+  account_top_up: "🔋",
+  investment_move: "📈",
   other: "➕"
 };
 
@@ -61,6 +71,10 @@ const BORROW_CATEGORY_EMOJIS = {
   credit_advance: "💳",
   split_bill: "🧮",
   emergency: "🚨",
+  medical: "🩺",
+  education_fee: "🎓",
+  rent_support: "🏘",
+  business_support: "🏪",
   other: "➕"
 };
 

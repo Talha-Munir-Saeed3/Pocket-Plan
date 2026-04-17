@@ -82,6 +82,9 @@ class ExpenseCategory(str, Enum):
     INSURANCE = "insurance"
     TAXES = "taxes"
     GIFTS = "gifts"
+    SPORTS = "sports"
+    EQUIPMENT = "equipment"
+    EVENTS = "events"
     OTHER = "other"
 
 
