@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-n
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
+import { Ionicons } from "@expo/vector-icons";
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
@@ -18,17 +19,17 @@ export default function DashboardScreen() {
   });
 
   const overviewCards = [
-    { label: "Income", value: "PKR 85,000", tone: "good" },
-    { label: "Spent", value: "PKR 42,500", tone: "bad" },
-    { label: "Saved", value: "PKR 42,500", tone: "good" },
-    { label: "Budget Used", value: "58%", tone: "warn" }
+    { label: "Income", value: "PKR 85,000", tone: "good", icon: "trending-up", accent: "#16A34A" },
+    { label: "Spent", value: "PKR 42,500", tone: "bad", icon: "trending-down", accent: "#DC2626" },
+    { label: "Saved", value: "PKR 42,500", tone: "good", icon: "wallet", accent: "#059669" },
+    { label: "Budget Used", value: "58%", tone: "warn", icon: "pie-chart", accent: "#D97706" }
   ];
 
   const recentTransactions = [
-    { title: "McDonald's", meta: "Food | Today, 2:45 PM", amount: -850 },
-    { title: "Careem Ride", meta: "Transport | Today, 9:15 AM", amount: -450 },
-    { title: "Fuel", meta: "Transport | Yesterday", amount: -3200 },
-    { title: "Pharmacy", meta: "Health | Yesterday", amount: -1200 }
+    { title: "McDonald's", meta: "Food | Today, 2:45 PM", amount: -850, icon: "🍔" },
+    { title: "Careem Ride", meta: "Transport | Today, 9:15 AM", amount: -450, icon: "🚗" },
+    { title: "Fuel", meta: "Transport | Yesterday", amount: -3200, icon: "⛽" },
+    { title: "Pharmacy", meta: "Health | Yesterday", amount: -1200, icon: "💊" }
   ];
 
   if (!fontsLoaded) return null;
@@ -62,14 +63,14 @@ export default function DashboardScreen() {
             <PrimaryButton
               label="Add Transaction"
               variant="secondary"
-              leftIcon={<Text style={styles.actionIcon}>+</Text>}
+              leftIcon={<Ionicons name="add-circle" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
               style={styles.actionButton}
               onPress={() => router.push("/add-transaction")}
             />
             <PrimaryButton
               label="Budget"
               variant="secondary"
-              leftIcon={<Text style={styles.actionIcon}>$</Text>}
+              leftIcon={<Ionicons name="wallet" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
               style={styles.actionButton}
               onPress={() => router.push("/budget")}
             />
@@ -80,8 +81,11 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>Overview</Text>
           <View style={styles.overviewGrid}>
             {overviewCards.map((item) => (
-              <View key={item.label} style={styles.overviewCard}>
-                <Text style={styles.overviewLabel}>{item.label}</Text>
+              <View key={item.label} style={[styles.overviewCard, { borderLeftColor: item.accent }]}> 
+                <View style={styles.overviewLabelRow}>
+                  <Ionicons name={item.icon} size={14} color={item.accent} />
+                  <Text style={styles.overviewLabel}>{item.label}</Text>
+                </View>
                 <Text
                   style={[
                     styles.overviewValue,
@@ -105,9 +109,12 @@ export default function DashboardScreen() {
           {recentTransactions.map((item) => (
             <View key={item.title} style={styles.transactionItem}>
               <View style={styles.rowBetweenInner}>
-                <View>
+                <View style={styles.transactionLeft}>
+                  <Text style={styles.transactionEmoji}>{item.icon}</Text>
+                  <View>
                   <Text style={styles.transactionTitle}>{item.title}</Text>
                   <Text style={styles.transactionMeta}>{item.meta}</Text>
+                  </View>
                 </View>
                 <Text style={styles.transactionAmount}>-PKR {Math.abs(item.amount).toLocaleString()}</Text>
               </View>
@@ -238,9 +245,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1
   },
-  actionIcon: {
-    color: "#2E2FA8",
-    fontWeight: "900",
+  actionIconGraphic: {
     marginRight: 4
   },
   overviewGrid: {
@@ -255,12 +260,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D8DEF6",
+    borderLeftWidth: 4,
     padding: 12,
     shadowColor: "#2F2F8F",
     shadowOpacity: 0.05,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 1
+  },
+  overviewLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6
   },
   overviewLabel: {
     fontSize: 13,
@@ -292,6 +303,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between"
+  },
+  transactionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  transactionEmoji: {
+    fontSize: 18
   },
   linkText: {
     color: "#5C5CDB",
