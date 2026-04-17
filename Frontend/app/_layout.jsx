@@ -31,6 +31,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add-transaction" />
+        <Stack.Screen name="add-transaction-help" />
         <Stack.Screen name="budget" />
         <Stack.Screen name="premium" />
       </Stack>

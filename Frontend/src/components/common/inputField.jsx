@@ -7,7 +7,9 @@ export default function InputField({
   placeholder,
   value,
   secureTextEntry,
-  onChangeText
+  onChangeText,
+  keyboardType,
+  ...rest
 }) {
   return (
     <View style={appStyles.inputGroup}>
@@ -19,6 +21,8 @@ export default function InputField({
         value={value}
         secureTextEntry={secureTextEntry}
         onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        {...rest}
       />
     </View>
   );

@@ -1,15 +1,19 @@
+import { useRef } from "react";
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const addTransactionLockRef = useRef(false);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const compact = width < 380;
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -34,10 +38,25 @@ export default function DashboardScreen() {
 
   if (!fontsLoaded) return null;
 
+  const openAddTransaction = () => {
+    if (addTransactionLockRef.current) return;
+    addTransactionLockRef.current = true;
+    router.push("/add-transaction");
+
+    setTimeout(() => {
+      addTransactionLockRef.current = false;
+    }, 700);
+  };
+
   return (
-    <ScreenContainer style={styles.screen}>
+    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+        <LinearGradient
+          colors={["#5C5CDB", "#3F2E95"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.hero, { paddingTop: insets.top + 12 }]}
+        >
           <View style={styles.heroGlowA} />
           <View style={styles.heroGlowB} />
           <Text style={styles.heroGreeting}>Welcome back, Talha</Text>
@@ -57,69 +76,71 @@ export default function DashboardScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.sectionPanel}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.row}>
-            <PrimaryButton
-              label="Add Transaction"
-              variant="secondary"
-              leftIcon={<Ionicons name="add-circle" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
-              style={styles.actionButton}
-              onPress={() => router.push("/add-transaction")}
-            />
-            <PrimaryButton
-              label="Budget"
-              variant="secondary"
-              leftIcon={<Ionicons name="wallet" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
-              style={styles.actionButton}
-              onPress={() => router.push("/budget")}
-            />
+        <View style={styles.bodyContainer}>
+          <View style={styles.sectionPanel}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.row}>
+              <PrimaryButton
+                label="Add Transaction"
+                variant="secondary"
+                leftIcon={<Ionicons name="add-circle" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
+                style={styles.actionButton}
+                onPress={openAddTransaction}
+              />
+              <PrimaryButton
+                label="Budget"
+                variant="secondary"
+                leftIcon={<Ionicons name="wallet" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
+                style={styles.actionButton}
+                onPress={() => router.push("/budget")}
+              />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.sectionPanel}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <View style={styles.overviewGrid}>
-            {overviewCards.map((item) => (
-              <View key={item.label} style={[styles.overviewCard, { borderLeftColor: item.accent }]}> 
-                <View style={styles.overviewLabelRow}>
-                  <Ionicons name={item.icon} size={14} color={item.accent} />
-                  <Text style={styles.overviewLabel}>{item.label}</Text>
+          <View style={styles.sectionPanel}>
+            <Text style={styles.sectionTitle}>Overview</Text>
+            <View style={styles.overviewGrid}>
+              {overviewCards.map((item) => (
+                <View key={item.label} style={[styles.overviewCard, { borderLeftColor: item.accent }]}> 
+                  <View style={styles.overviewLabelRow}>
+                    <Ionicons name={item.icon} size={14} color={item.accent} />
+                    <Text style={styles.overviewLabel}>{item.label}</Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.overviewValue,
+                      item.tone === "good" && styles.valueGood,
+                      item.tone === "bad" && styles.valueBad,
+                      item.tone === "warn" && styles.valueWarn
+                    ]}
+                  >
+                    {item.value}
+                  </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.overviewValue,
-                    item.tone === "good" && styles.valueGood,
-                    item.tone === "bad" && styles.valueBad,
-                    item.tone === "warn" && styles.valueWarn
-                  ]}
-                >
-                  {item.value}
-                </Text>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.sectionPanel}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.sectionTitle}>Recent Transactions</Text>
+              <Text style={styles.linkText} onPress={() => router.push("/(tabs)/history")}>View all</Text>
+            </View>
+            {recentTransactions.map((item) => (
+              <View key={item.title} style={styles.transactionItem}>
+                <View style={styles.rowBetweenInner}>
+                  <View style={styles.transactionLeft}>
+                    <Text style={styles.transactionEmoji}>{item.icon}</Text>
+                    <View>
+                    <Text style={styles.transactionTitle}>{item.title}</Text>
+                    <Text style={styles.transactionMeta}>{item.meta}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.transactionAmount}>-PKR {Math.abs(item.amount).toLocaleString()}</Text>
+                </View>
               </View>
             ))}
           </View>
-        </View>
-
-        <View style={styles.sectionPanel}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.sectionTitle}>Recent Transactions</Text>
-            <Text style={styles.linkText} onPress={() => router.push("/(tabs)/history")}>View all</Text>
-          </View>
-          {recentTransactions.map((item) => (
-            <View key={item.title} style={styles.transactionItem}>
-              <View style={styles.rowBetweenInner}>
-                <View style={styles.transactionLeft}>
-                  <Text style={styles.transactionEmoji}>{item.icon}</Text>
-                  <View>
-                  <Text style={styles.transactionTitle}>{item.title}</Text>
-                  <Text style={styles.transactionMeta}>{item.meta}</Text>
-                  </View>
-                </View>
-                <Text style={styles.transactionAmount}>-PKR {Math.abs(item.amount).toLocaleString()}</Text>
-              </View>
-            </View>
-          ))}
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -131,18 +152,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4FF"
   },
   content: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
+    paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 30
   },
   hero: {
-    borderRadius: 24,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     paddingHorizontal: 18,
-    paddingTop: 18,
+    paddingTop: 14,
     paddingBottom: 20,
     minHeight: 290,
-    marginBottom: 18,
     overflow: "hidden"
+  },
+  bodyContainer: {
+    backgroundColor: "#F4F4FF",
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    marginTop: 0
   },
   heroGlowA: {
     position: "absolute",
