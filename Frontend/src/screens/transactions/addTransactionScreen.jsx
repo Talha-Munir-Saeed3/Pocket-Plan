@@ -270,6 +270,7 @@ export default function AddTransactionScreen() {
                 }
               }}
             >
+            <View style={styles.wheelSpacer} />
             {dateSliderOptions.map((dateItem) => (
               <Pressable
                 key={dateItem.toISOString()}
@@ -277,12 +278,17 @@ export default function AddTransactionScreen() {
                 onPress={() => {
                   setDateError("");
                   setSelectedDate(startOfDay(dateItem));
+                  const dateIndex = dateSliderOptions.findIndex((d) => isSameDay(d, dateItem));
+                  if (dateIndex >= 0 && dateWheelRef.current) {
+                    dateWheelRef.current.scrollTo({ y: dateIndex * WHEEL_ROW_HEIGHT, animated: true });
+                  }
                 }}
               >
                 <Text style={[styles.wheelNumber, isSameDay(selectedDate, dateItem) && styles.wheelNumberActive]}>{dateItem.getDate()}</Text>
                 <Text style={[styles.wheelText, isSameDay(selectedDate, dateItem) && styles.wheelTextActive]}>{dateItem.toLocaleDateString("en-US", { weekday: "short", month: "short" })}</Text>
               </Pressable>
             ))}
+            <View style={styles.wheelSpacer} />
             </ScrollView>
           </View>
           {dateError ? <Text style={styles.errorText}>{dateError}</Text> : null}
@@ -504,7 +510,10 @@ const styles = StyleSheet.create({
     maxHeight: 168
   },
   wheelContent: {
-    paddingVertical: 6
+    paddingVertical: 0
+  },
+  wheelSpacer: {
+    height: WHEEL_ROW_HEIGHT
   },
   wheelRow: {
     flexDirection: "row",
