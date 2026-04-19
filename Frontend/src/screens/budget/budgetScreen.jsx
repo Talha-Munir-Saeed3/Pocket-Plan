@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 
@@ -35,6 +36,11 @@ const STARTER_KEYS = ["rent", "groceries", "transport", "utilities", "food", "sh
 const toCurrency = (value) => `PKR ${Math.max(0, Number(value) || 0).toLocaleString()}`;
 
 const sanitizeNumber = (value) => value.replace(/[^0-9]/g, "");
+const formatNumberInput = (value) => {
+  const numeric = sanitizeNumber(String(value ?? ""));
+  if (!numeric) return "";
+  return Number(numeric).toLocaleString();
+};
 
 const getUsageColor = (usagePercent) => {
   if (usagePercent >= 100) return "#DC2626";
@@ -51,18 +57,25 @@ const getUsageLabel = (usagePercent) => {
 };
 
 export default function BudgetScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [activeView, setActiveView] = useState("allocation");
+  const bulkUpdateRef = useRef(false);
+  const [activeView, setActiveView] = useState("overview");
   const [monthlyBudget, setMonthlyBudget] = useState("75000");
-  const [savingsGoal, setSavingsGoal] = useState("15000");
-  const [categories, setCategories] = useState(
-    CATEGORY_LIBRARY.filter((item) => STARTER_KEYS.includes(item.key)).map((item) => ({
+  const initialCategories = CATEGORY_LIBRARY.filter((item) => STARTER_KEYS.includes(item.key)).map((item) => ({
       ...item,
       planned: String(Math.round(75000 * item.weight))
-    }))
+    }));
+  const [categories, setCategories] = useState(initialCategories);
+  const [draftPlanned, setDraftPlanned] = useState(
+    initialCategories.reduce((acc, item) => {
+      acc[item.key] = item.planned;
+      return acc;
+    }, {})
   );
   const [savedPlans, setSavedPlans] = useState([]);
   const [savedMessage, setSavedMessage] = useState("");
+  const [muteMidMonthWarning, setMuteMidMonthWarning] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -79,6 +92,9 @@ export default function BudgetScreen() {
       }).format(new Date()),
     []
   );
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysLeft = Math.max(0, daysInMonth - now.getDate());
 
   const totalPlanned = useMemo(
     () => categories.reduce((sum, item) => sum + (Number(item.planned) || 0), 0),
@@ -92,9 +108,6 @@ export default function BudgetScreen() {
 
   const budgetValue = Number(monthlyBudget) || 0;
   const remaining = budgetValue - totalPlanned;
-  const savingsGoalValue = Number(savingsGoal) || 0;
-  const projectedSavings = Math.max(0, budgetValue - totalSpent);
-  const savingsProgress = savingsGoalValue > 0 ? Math.round((projectedSavings / savingsGoalValue) * 100) : 0;
   const totalUsedPercent = budgetValue > 0 ? Math.round((totalSpent / budgetValue) * 100) : 0;
 
   const sortedOverviewCategories = useMemo(
@@ -129,6 +142,12 @@ export default function BudgetScreen() {
     [categories]
   );
 
+  useEffect(() => {
+    if (activeView !== "allocation") {
+      setMuteMidMonthWarning(false);
+    }
+  }, [activeView]);
+
   const updateCategoryPlanned = (key, value) => {
     setCategories((prev) =>
       prev.map((item) =>
@@ -142,29 +161,116 @@ export default function BudgetScreen() {
     );
   };
 
-  const addCategory = (category) => {
-    setCategories((prev) => [
-      ...prev,
-      {
-        ...category,
-        planned: "0"
-      }
-    ]);
+  const commitCategoryPlanned = (item) => {
+    if (bulkUpdateRef.current) return;
+
+    const original = String(item.planned || "0");
+    const proposed = sanitizeNumber(draftPlanned[item.key] || "0");
+
+    if (proposed === original) return;
+
+    const currentMonthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(now);
+    const spentAmount = Number(item.spent) || 0;
+    const originalAmount = Number(original) || 0;
+    const proposedAmount = Number(proposed) || 0;
+    const isMidMonthEdit = now.getDate() > 1 && spentAmount > 0;
+
+    const applyUpdate = () => {
+      updateCategoryPlanned(item.key, proposed);
+      setDraftPlanned((prev) => ({ ...prev, [item.key]: proposed }));
+    };
+
+    const revertDraft = () => {
+      setDraftPlanned((prev) => ({ ...prev, [item.key]: original }));
+    };
+
+    if (!isMidMonthEdit || muteMidMonthWarning) {
+      applyUpdate();
+      return;
+    }
+
+    Alert.alert(
+      `${item.label} limit update`,
+      `\u26A0\uFE0F You are editing your ${currentMonthName} budget. You have already spent ${toCurrency(spentAmount)} this month. Changing ${item.label} from ${toCurrency(originalAmount)} to ${toCurrency(proposedAmount)} may change its status.`,
+      [
+        { text: "Cancel", style: "cancel", onPress: revertDraft },
+        {
+          text: "Don't Show Again",
+          onPress: () => {
+            setMuteMidMonthWarning(true);
+            applyUpdate();
+          }
+        },
+        { text: "Update Anyway", onPress: applyUpdate }
+      ]
+    );
   };
 
-  const applyWeightedSplit = () => {
-    const totalBudget = Number(monthlyBudget) || 0;
-    if (totalBudget <= 0) return;
+  const addCategory = (category) => {
+    setCategories((prev) => {
+      const next = [
+        ...prev,
+        {
+          ...category,
+          planned: "0"
+        }
+      ];
+      return next;
+    });
+    setDraftPlanned((prev) => ({ ...prev, [category.key]: "0" }));
+  };
 
-    setCategories((prev) =>
-      prev.map((item) => {
-        const source = CATEGORY_LIBRARY.find((lib) => lib.key === item.key);
-        return {
-          ...item,
-          planned: String(Math.round(totalBudget * (source?.weight || 0.05)))
-        };
-      })
+  const applyEvenSplit = () => {
+    const totalBudget = Number(monthlyBudget) || 0;
+    if (totalBudget <= 0 || categories.length === 0) return;
+
+    bulkUpdateRef.current = true;
+
+    const baseSplit = Math.floor(totalBudget / categories.length);
+    const remainder = totalBudget - baseSplit * categories.length;
+
+    const next = categories.map((item, index) => ({
+      ...item,
+      planned: String(baseSplit + (index < remainder ? 1 : 0))
+    }));
+
+    setCategories(next);
+    setDraftPlanned(
+      next.reduce((acc, item) => {
+        acc[item.key] = item.planned;
+        return acc;
+      }, {})
     );
+
+    setTimeout(() => {
+      bulkUpdateRef.current = false;
+    }, 0);
+  };
+
+  const clearPlan = () => {
+    Alert.alert("Clear Plan", "This will reset all category limits to 0. Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Clear",
+        style: "destructive",
+        onPress: () => {
+          bulkUpdateRef.current = true;
+
+          const next = categories.map((c) => ({ ...c, planned: "0" }));
+          setCategories(next);
+          setDraftPlanned(
+            next.reduce((acc, item) => {
+              acc[item.key] = item.planned;
+              return acc;
+            }, {})
+          );
+
+          setTimeout(() => {
+            bulkUpdateRef.current = false;
+          }, 0);
+        }
+      }
+    ]);
   };
 
   const saveSnapshot = () => {
@@ -182,6 +288,12 @@ export default function BudgetScreen() {
   const loadSnapshot = (snapshot) => {
     setMonthlyBudget(snapshot.monthlyBudget);
     setCategories(snapshot.categories);
+    setDraftPlanned(
+      snapshot.categories.reduce((acc, item) => {
+        acc[item.key] = String(item.planned || "0");
+        return acc;
+      }, {})
+    );
     setSavedMessage(`Loaded ${snapshot.title}`);
   };
 
@@ -191,8 +303,13 @@ export default function BudgetScreen() {
     <ScreenContainer style={styles.screen} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
-          <Text style={styles.heroTitle}>Budget Planner</Text>
-          <Text style={styles.heroSub}>{monthLabel}</Text>
+          <View style={styles.heroTopRow}>
+            <Text style={styles.heroTitle}>Budget Planner</Text>
+            <Pressable style={styles.headerHelpButton} onPress={() => router.push(`/budget-help?section=${activeView}`)}>
+              <Text style={styles.headerHelpText}>?</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.heroSub}>{monthLabel} · {daysLeft} days left</Text>
           <View style={styles.heroStats}>
             <View style={styles.heroStatItem}>
               <Text style={styles.heroStatLabel}>Budget</Text>
@@ -211,16 +328,16 @@ export default function BudgetScreen() {
 
         <View style={styles.viewTabsWrap}>
           <Pressable
-            style={[styles.viewTab, activeView === "allocation" && styles.viewTabActive]}
-            onPress={() => setActiveView("allocation")}
-          >
-            <Text style={[styles.viewTabText, activeView === "allocation" && styles.viewTabTextActive]}>Allocation</Text>
-          </Pressable>
-          <Pressable
             style={[styles.viewTab, activeView === "overview" && styles.viewTabActive]}
             onPress={() => setActiveView("overview")}
           >
             <Text style={[styles.viewTabText, activeView === "overview" && styles.viewTabTextActive]}>Overview</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.viewTab, activeView === "allocation" && styles.viewTabActive]}
+            onPress={() => setActiveView("allocation")}
+          >
+            <Text style={[styles.viewTabText, activeView === "allocation" && styles.viewTabTextActive]}>Allocation</Text>
           </Pressable>
         </View>
 
@@ -229,7 +346,7 @@ export default function BudgetScreen() {
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Monthly Budget</Text>
           <TextInput
-            value={monthlyBudget}
+            value={formatNumberInput(monthlyBudget)}
             onChangeText={(text) => setMonthlyBudget(sanitizeNumber(text))}
             placeholder="Enter monthly budget"
             placeholderTextColor="#9CA3AF"
@@ -237,41 +354,12 @@ export default function BudgetScreen() {
             style={styles.budgetInput}
           />
           <View style={styles.presetRow}>
-            <Pressable style={styles.presetChip} onPress={applyWeightedSplit}>
-              <Text style={styles.presetChipText}>Auto Split</Text>
+            <Pressable style={styles.presetChip} onPress={applyEvenSplit}>
+              <Text style={styles.presetChipText}>Split Evenly</Text>
             </Pressable>
-            <Pressable style={styles.presetChip} onPress={() => setCategories((prev) => prev.map((c) => ({ ...c, planned: "0" })))}>
+            <Pressable style={styles.presetChip} onPress={clearPlan}>
               <Text style={styles.presetChipText}>Clear Plan</Text>
             </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Savings Goal</Text>
-          <TextInput
-            value={savingsGoal}
-            onChangeText={(text) => setSavingsGoal(sanitizeNumber(text))}
-            placeholder="Enter savings goal"
-            placeholderTextColor="#9CA3AF"
-            keyboardType="number-pad"
-            style={styles.budgetInput}
-          />
-          <View style={styles.savingsMetaRow}>
-            <Text style={styles.savingsMeta}>Projected savings: {toCurrency(projectedSavings)}</Text>
-            <Text style={[styles.savingsTag, savingsProgress >= 100 && styles.savingsTagGood]}>
-              {Math.max(0, savingsProgress)}%
-            </Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.min(100, Math.max(0, savingsProgress))}%`,
-                  backgroundColor: savingsProgress >= 100 ? "#16A34A" : "#5C5CDB"
-                }
-              ]}
-            />
           </View>
         </View>
 
@@ -288,8 +376,14 @@ export default function BudgetScreen() {
                   <Text style={styles.categoryMeta}>Used {usedPct}%</Text>
                 </View>
                 <TextInput
-                  value={item.planned}
-                  onChangeText={(text) => updateCategoryPlanned(item.key, text)}
+                  value={formatNumberInput(draftPlanned[item.key])}
+                  onChangeText={(text) =>
+                    setDraftPlanned((prev) => ({
+                      ...prev,
+                      [item.key]: sanitizeNumber(text)
+                    }))
+                  }
+                  onBlur={() => commitCategoryPlanned(item)}
                   placeholder="0"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="number-pad"
@@ -312,7 +406,7 @@ export default function BudgetScreen() {
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Storage And Reuse</Text>
-          <Text style={styles.helperText}>Save this plan as a quick snapshot and reload anytime in this session.</Text>
+          <Text style={styles.helperText}>Save this plan as a quick snapshot and reload anytime in this session. (Will be removed once APIs are created to reduce load and auto-save.)</Text>
           <PrimaryButton label="Save Snapshot" onPress={saveSnapshot} />
           {savedMessage ? <Text style={styles.savedText}>{savedMessage}</Text> : null}
 
@@ -354,7 +448,7 @@ export default function BudgetScreen() {
               <View style={styles.legendItem}><View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} /><Text style={styles.legendText}>100%+</Text></View>
             </View>
 
-            {sortedOverviewCategories.map((item) => {
+            {sortedOverviewCategories.filter((item) => (Number(item.spent) || 0) > 0).map((item) => {
               const planned = Number(item.planned) || 0;
               const spent = Number(item.spent) || 0;
               const usedPctRaw = planned > 0 ? Math.round((spent / planned) * 100) : 0;
@@ -381,6 +475,10 @@ export default function BudgetScreen() {
                 </View>
               );
             })}
+
+            {!sortedOverviewCategories.some((item) => (Number(item.spent) || 0) > 0) ? (
+              <Text style={styles.helperText}>No spending yet this month. Start adding transactions to see progress.</Text>
+            ) : null}
           </View>
         )}
       </ScrollView>
@@ -408,6 +506,26 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 29,
     fontFamily: "Sora_800ExtraBold"
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  headerHelpButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#C7CEFF",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  headerHelpText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "Sora_700Bold"
   },
   heroSub: {
     marginTop: 6,
@@ -570,31 +688,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Sora_600SemiBold",
     marginBottom: 10
-  },
-  savingsMetaRow: {
-    marginTop: 8,
-    marginBottom: 7,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  savingsMeta: {
-    color: "#475569",
-    fontSize: 12,
-    fontFamily: "Sora_600SemiBold"
-  },
-  savingsTag: {
-    color: "#2E2FA8",
-    fontSize: 11,
-    fontFamily: "Sora_700Bold",
-    backgroundColor: "#EEF0FF",
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4
-  },
-  savingsTagGood: {
-    color: "#166534",
-    backgroundColor: "#DCFCE7"
   },
   overviewSummaryRow: {
     flexDirection: "row",
