@@ -84,15 +84,24 @@ export default function DashboardScreen() {
                 label="Add Transaction"
                 variant="secondary"
                 leftIcon={<Ionicons name="add-circle" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
-                style={styles.actionButton}
+                style={styles.actionButtonSingle}
                 onPress={openAddTransaction}
               />
+            </View>
+            <View style={styles.row}>
               <PrimaryButton
                 label="Budget"
                 variant="secondary"
                 leftIcon={<Ionicons name="wallet" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
-                style={styles.actionButton}
+                style={styles.actionButtonHalf}
                 onPress={() => router.push("/budget")}
+              />
+              <PrimaryButton
+                label="Savings Goal"
+                variant="secondary"
+                leftIcon={<Ionicons name="trophy" size={18} color="#4C46C8" style={styles.actionIconGraphic} />}
+                style={styles.actionButtonHalf}
+                onPress={() => router.push("/savings-goal")}
               />
             </View>
           </View>
@@ -271,10 +280,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 2
+    marginBottom: 8
   },
   actionButton: {
-    flex: 1
+    flex: 1,
+    minHeight: 48
+  },
+  actionButtonHalf: {
+    flex: 1,
+    minHeight: 48
+  },
+  actionButtonSingle: {
+    width: "100%",
+    minHeight: 48
   },
   actionIconGraphic: {
     marginRight: 4

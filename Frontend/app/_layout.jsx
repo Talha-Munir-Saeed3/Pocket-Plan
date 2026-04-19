@@ -33,6 +33,9 @@ export default function RootLayout() {
         <Stack.Screen name="add-transaction" />
         <Stack.Screen name="add-transaction-help" />
         <Stack.Screen name="budget" />
+        <Stack.Screen name="budget-help" />
+        <Stack.Screen name="savings-goal" />
+        <Stack.Screen name="savings-help" />
         <Stack.Screen name="premium" />
       </Stack>
     </SafeAreaProvider>

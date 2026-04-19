@@ -27,7 +27,7 @@ export default function AddTransactionHelpScreen() {
           <View style={styles.heroRow}>
             <Text style={styles.heroTitle}>Add Transaction Help</Text>
             <Pressable onPress={() => router.back()} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Ionicons name="close" size={16} color="#FFFFFF" />
             </Pressable>
           </View>
           <Text style={styles.heroSubtitle}>Step-by-step guidance for adding clean and accurate entries.</Text>
@@ -63,32 +63,43 @@ export default function AddTransactionHelpScreen() {
         </View>
 
         {activeSection === "create" ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>How To Add A Transaction</Text>
+        <View style={styles.sectionStack}>
+        <View style={[styles.card, styles.purpleCard]}>
+          <Text style={styles.sectionHead}>🟣 How To Add A Transaction</Text>
           <View style={styles.stepItem}><Text style={styles.stepBadge}>1</Text><Text style={styles.item}>Choose type first: Expense, Income, Transfer, or Borrow.</Text></View>
           <View style={styles.stepItem}><Text style={styles.stepBadge}>2</Text><Text style={styles.item}>Pick the matching category emoji.</Text></View>
           <View style={styles.stepItem}><Text style={styles.stepBadge}>3</Text><Text style={styles.item}>Enter amount in numbers only.</Text></View>
           <View style={styles.stepItem}><Text style={styles.stepBadge}>4</Text><Text style={styles.item}>Select a date from the allowed date wheel.</Text></View>
           <View style={styles.stepItem}><Text style={styles.stepBadge}>5</Text><Text style={styles.item}>Description is optional. Add a note only if needed, then press Save Transaction.</Text></View>
         </View>
+        <View style={[styles.card, styles.greenCard]}>
+          <Text style={styles.sectionHead}>🟢 Best Practice</Text>
+          <Text style={styles.item}>Enter type and amount first, then category and date, so entries stay fast and consistent.</Text>
+        </View>
+        </View>
         ) : null}
 
         {activeSection === "grace" ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Grace Period Rule</Text>
+        <View style={styles.sectionStack}>
+        <View style={[styles.card, styles.amberCard]}>
+          <Text style={styles.sectionHead}>🟡 Grace Period Rule</Text>
           <Text style={styles.body}>
             Transactions are kept inside the current month to avoid report imbalance. A grace window of 2 days is allowed at month start.
           </Text>
+        </View>
+        <View style={[styles.card, styles.amberCard]}>
+          <Text style={styles.sectionHead}>🟡 Allowed Date Window</Text>
           <View style={styles.highlightBox}>
             <Text style={styles.highlightText}>Day 1-2: Previous month dates are allowed.</Text>
             <Text style={styles.highlightText}>Day 3 onward: Previous month dates are locked.</Text>
           </View>
         </View>
+        </View>
         ) : null}
 
         {activeSection === "types" ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Transaction Types Explained</Text>
+        <View style={[styles.card, styles.purpleCard]}>
+          <Text style={styles.sectionHead}>🟣 Transaction Types Explained</Text>
           <View style={styles.typeGrid}>
             <View style={styles.typeCard}><Text style={styles.typeEmoji}>💸</Text><Text style={styles.typeTitle}>Expense</Text><Text style={styles.typeBody}>Money going out.</Text></View>
             <View style={styles.typeCard}><Text style={styles.typeEmoji}>💰</Text><Text style={styles.typeTitle}>Income</Text><Text style={styles.typeBody}>Money coming in.</Text></View>
@@ -142,18 +153,31 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "rgba(255,255,255,0.16)"
   },
-  closeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontFamily: "Sora_700Bold"
-  },
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#DDE3F4",
+    borderLeftWidth: 4,
+    borderLeftColor: "#DDE3F4",
     padding: 12,
     marginBottom: 10
+  },
+  sectionStack: {
+    gap: 10,
+    marginBottom: 10
+  },
+  purpleCard: {
+    borderLeftColor: "#6D28D9",
+    backgroundColor: "#F8F5FF"
+  },
+  greenCard: {
+    borderLeftColor: "#16A34A",
+    backgroundColor: "#F5FFF8"
+  },
+  amberCard: {
+    borderLeftColor: "#D97706",
+    backgroundColor: "#FFF9F2"
   },
   switcherCard: {
     backgroundColor: "#FFFFFF",
@@ -260,7 +284,7 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_600SemiBold",
     textAlign: "center"
   },
-  cardTitle: {
+  sectionHead: {
     color: "#1F2937",
     fontSize: 14,
     fontFamily: "Sora_700Bold",

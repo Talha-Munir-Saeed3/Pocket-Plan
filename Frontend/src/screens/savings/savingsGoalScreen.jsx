@@ -1,0 +1,668 @@
+import { useMemo, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
+import { Ionicons } from "@expo/vector-icons";
+
+import ScreenContainer from "../../components/common/screenContainer";
+
+const sanitizeNumber = (value) => value.replace(/[^0-9]/g, "");
+const toCurrency = (value) => `PKR ${Math.max(0, Number(value) || 0).toLocaleString()}`;
+const formatNumberInput = (value) => {
+  const numeric = sanitizeNumber(String(value ?? ""));
+  if (!numeric) return "";
+  return Number(numeric).toLocaleString();
+};
+
+export default function SavingsGoalScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [activeView, setActiveView] = useState("overview");
+  const [goalName, setGoalName] = useState("New Laptop");
+  const [targetAmount, setTargetAmount] = useState("150000");
+  const [monthlyContribution, setMonthlyContribution] = useState("12000");
+  const [savedAmount] = useState("42500");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [draftGoalName, setDraftGoalName] = useState(goalName);
+  const [draftTargetAmount, setDraftTargetAmount] = useState(targetAmount);
+  const [draftMonthlyContribution, setDraftMonthlyContribution] = useState(monthlyContribution);
+
+  const [fontsLoaded] = useFonts({
+    Sora_500Medium,
+    Sora_600SemiBold,
+    Sora_700Bold,
+    Sora_800ExtraBold
+  });
+
+  const targetValue = Number(targetAmount) || 0;
+  const savedValue = Number(savedAmount) || 0;
+  const monthlyValue = Number(monthlyContribution) || 0;
+  const remaining = Math.max(0, targetValue - savedValue);
+  const progress = targetValue > 0 ? Math.round((savedValue / targetValue) * 100) : 0;
+  const monthsToGoal = monthlyValue > 0 ? Math.ceil(remaining / monthlyValue) : 0;
+  const recommendedMonthly = targetValue > 0 ? Math.ceil(targetValue / 12) : 0;
+  const monthlyProgress = recommendedMonthly > 0 ? Math.round((monthlyValue / recommendedMonthly) * 100) : 0;
+  const monthlyHealth = monthlyProgress >= 100 ? "On Track" : monthlyProgress >= 75 ? "Caution" : "Off Track";
+  const monthlyHealthColor = monthlyHealth === "On Track" ? "#16A34A" : monthlyHealth === "Caution" ? "#EAB308" : "#DC2626";
+
+  const paceMessage = `At ${toCurrency(monthlyValue)}/month you will reach your goal in ${monthsToGoal} month${monthsToGoal === 1 ? "" : "s"} 🎯`;
+
+  const daysLeft = useMemo(() => {
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return Math.max(0, daysInMonth - now.getDate());
+  }, []);
+
+  const startedLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric"
+      }).format(new Date()),
+    []
+  );
+
+  const openEditSheet = () => {
+    setDraftGoalName(goalName);
+    setDraftTargetAmount(targetAmount);
+    setDraftMonthlyContribution(monthlyContribution);
+    setIsSheetOpen(true);
+  };
+
+  const saveEditSheet = () => {
+    setGoalName(draftGoalName.trim() || "New Laptop");
+    setTargetAmount(sanitizeNumber(draftTargetAmount) || "0");
+    setMonthlyContribution(sanitizeNumber(draftMonthlyContribution) || "0");
+    setIsSheetOpen(false);
+  };
+
+  if (!fontsLoaded) return null;
+
+  return (
+    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
+        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
+          <View style={styles.heroTopRow}>
+            <Text style={styles.heroTitle}>Savings Goal</Text>
+            <View style={styles.heroRightRow}>
+              <Text style={styles.heroSub}>{daysLeft} days left</Text>
+              <Pressable
+                style={styles.headerHelpButton}
+                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                onPress={() => router.push(`/savings-help?section=${activeView}`)}
+              >
+                <Text style={styles.headerHelpText}>?</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.pillsRow}>
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>Target</Text>
+              <Text style={styles.pillValue}>{toCurrency(targetValue)}</Text>
+            </View>
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>Saved</Text>
+              <Text style={styles.pillValue}>{toCurrency(savedValue)}</Text>
+            </View>
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>ETA</Text>
+              <Text style={styles.pillValue}>{monthsToGoal} months</Text>
+            </View>
+          </View>
+        </LinearGradient>
+
+        <View style={styles.viewTabsWrap}>
+          <Pressable
+            style={[styles.viewTab, activeView === "overview" && styles.viewTabActive]}
+            onPress={() => setActiveView("overview")}
+          >
+            <Text style={[styles.viewTabText, activeView === "overview" && styles.viewTabTextActive]}>Overview</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.viewTab, activeView === "plan" && styles.viewTabActive]}
+            onPress={() => setActiveView("plan")}
+          >
+            <Text style={[styles.viewTabText, activeView === "plan" && styles.viewTabTextActive]}>Plan</Text>
+          </Pressable>
+        </View>
+
+        {activeView === "overview" ? (
+          <View style={styles.card}>
+            <View style={styles.sectionHeadRow}>
+              <Text style={styles.sectionTitle}>Overview</Text>
+              <View style={[styles.healthBadge, { borderColor: monthlyHealthColor, backgroundColor: `${monthlyHealthColor}1A` }]}>
+                <Text style={[styles.healthBadgeText, { color: monthlyHealthColor }]}>{monthlyHealth}</Text>
+              </View>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, progress))}%` }]} />
+            </View>
+
+            <View style={styles.overviewRow}>
+              <Text style={styles.progressPercent}>Total Goal Progress: {Math.max(0, progress)}%</Text>
+              <Text style={styles.overviewEta}>Estimated Time Left: {monthsToGoal} months</Text>
+            </View>
+
+            <Text style={styles.metricLine}>Saved So Far: {toCurrency(savedValue)}</Text>
+            <Text style={styles.metricLine}>Remaining To Goal: {toCurrency(remaining)}</Text>
+
+            <View style={styles.monthlyCard}>
+              <View style={styles.monthlyHeadRow}>
+                <Text style={styles.monthlyTitle}>Monthly Progress</Text>
+                <Text style={[styles.monthlyStatus, { color: monthlyHealthColor }]}>{Math.max(0, monthlyProgress)}% ({monthlyHealth})</Text>
+              </View>
+              <View style={styles.monthlyTrack}>
+                <View style={[styles.monthlyFill, { width: `${Math.min(100, Math.max(0, monthlyProgress))}%` }]} />
+              </View>
+              <View style={styles.monthlyStatsRow}>
+                <Text style={styles.monthlyStatText}>Recommended: {toCurrency(recommendedMonthly)}/mo</Text>
+                <Text style={styles.monthlyStatText}>Current: {toCurrency(monthlyValue)}/mo</Text>
+              </View>
+              <Text style={styles.monthlyScaleHint}>Scale: On Track at least 100% | Caution 75-99% | Off Track below 75%</Text>
+            </View>
+
+            <View style={styles.motivationBox}>
+              <Text style={styles.etaMessage}>{paceMessage}</Text>
+            </View>
+          </View>
+        ) : null}
+
+        {activeView === "plan" ? (
+          <>
+            <View style={styles.card}>
+              <View style={styles.cardHeadRow}>
+                <Text style={styles.sectionTitle}>Savings Plan</Text>
+                <Pressable style={styles.editBtn} onPress={openEditSheet}>
+                  <Text style={styles.editBtnText}>Adjust</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.setupRow}>
+                <Text style={styles.setupLabel}>Goal Name</Text>
+                <Text style={styles.setupValue}>{goalName}</Text>
+              </View>
+
+              <View style={styles.setupRow}>
+                <Text style={styles.setupLabel}>Total Target</Text>
+                <Text style={styles.setupValue}>{toCurrency(targetValue)}</Text>
+              </View>
+
+              <View style={styles.setupRow}>
+                <Text style={styles.setupLabel}>Monthly Saving</Text>
+                <Text style={styles.setupValue}>{toCurrency(monthlyValue)}</Text>
+              </View>
+
+              <View style={styles.setupRow}>
+                <Text style={styles.setupLabel}>Started</Text>
+                <Text style={styles.setupValue}>{startedLabel}</Text>
+              </View>
+            </View>
+
+            <View style={styles.premiumCard}>
+              <View style={styles.premiumRow}>
+                <View style={styles.premiumLeft}>
+                  <Ionicons name="star" size={16} color="#7C3AED" />
+                  <Text style={styles.premiumTitle}>Add Another Goal</Text>
+                </View>
+                <View style={styles.premiumBadge}>
+                  <Text style={styles.premiumBadgeText}>Premium</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        ) : null}
+      </ScrollView>
+
+      <Modal visible={isSheetOpen} transparent animationType="slide" onRequestClose={() => setIsSheetOpen(false)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setIsSheetOpen(false)}>
+          <Pressable style={[styles.sheet, { paddingBottom: insets.bottom + 14 }]} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Edit Goal</Text>
+
+            <Text style={styles.sheetLabel}>Goal Name</Text>
+            <TextInput
+              value={draftGoalName}
+              onChangeText={setDraftGoalName}
+              placeholder="Goal name"
+              placeholderTextColor="#9CA3AF"
+              style={styles.sheetInput}
+            />
+
+            <Text style={styles.sheetLabel}>Total Target</Text>
+            <TextInput
+              value={formatNumberInput(draftTargetAmount)}
+              onChangeText={(text) => setDraftTargetAmount(sanitizeNumber(text))}
+              placeholder="PKR 0"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="number-pad"
+              style={styles.sheetInput}
+            />
+
+            <Text style={styles.sheetLabel}>Monthly Saving</Text>
+            <TextInput
+              value={formatNumberInput(draftMonthlyContribution)}
+              onChangeText={(text) => setDraftMonthlyContribution(sanitizeNumber(text))}
+              placeholder="PKR 0"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="number-pad"
+              style={styles.sheetInput}
+            />
+
+            <View style={styles.sheetActions}>
+              <Pressable style={[styles.sheetBtn, styles.sheetBtnGhost]} onPress={() => setIsSheetOpen(false)}>
+                <Text style={styles.sheetBtnGhostText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={[styles.sheetBtn, styles.sheetBtnPrimary]} onPress={saveEditSheet}>
+                <Text style={styles.sheetBtnPrimaryText}>Save</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </ScreenContainer>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    backgroundColor: "#F4F4FF"
+  },
+  content: {
+    paddingHorizontal: 14,
+    paddingTop: 0
+  },
+  hero: {
+    marginHorizontal: -14,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: 12
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  heroRightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  heroTitle: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontFamily: "Sora_800ExtraBold"
+  },
+  heroSub: {
+    color: "#DCE2FF",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold"
+  },
+  pillsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12
+  },
+  headerHelpButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    backgroundColor: "rgba(255,255,255,0.16)"
+  },
+  headerHelpText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontFamily: "Sora_700Bold"
+  },
+  pill: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.24)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 10
+  },
+  pillLabel: {
+    color: "#DCE2FF",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold"
+  },
+  pillValue: {
+    marginTop: 4,
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderColor: "#DDE3F4",
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 10,
+    shadowColor: "#2F2F8F",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2
+  },
+  viewTabsWrap: {
+    flexDirection: "row",
+    marginBottom: 10,
+    borderRadius: 12,
+    backgroundColor: "#E8EBFF",
+    padding: 4,
+    gap: 6
+  },
+  viewTab: {
+    flex: 1,
+    borderRadius: 9,
+    paddingVertical: 8,
+    alignItems: "center"
+  },
+  viewTabActive: {
+    backgroundColor: "#5C5CDB"
+  },
+  viewTabText: {
+    color: "#3949A2",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  viewTabTextActive: {
+    color: "#FFFFFF"
+  },
+  sectionHeadRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8
+  },
+  sectionTitle: {
+    color: "#1F2937",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold",
+    marginBottom: 0
+  },
+  progressTrack: {
+    height: 16,
+    borderRadius: 999,
+    backgroundColor: "#EEF2FF",
+    overflow: "hidden",
+    marginBottom: 10
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#5C5CDB"
+  },
+  progressPercent: {
+    color: "#4C46C8",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  healthBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4
+  },
+  healthBadgeText: {
+    fontSize: 11,
+    fontFamily: "Sora_700Bold"
+  },
+  overviewRow: {
+    marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  overviewEta: {
+    color: "#334155",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  metricLine: {
+    color: "#334155",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold",
+    marginBottom: 4
+  },
+  monthlyLine: {
+    color: "#475569",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold",
+    marginBottom: 4
+  },
+  monthlyCard: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#E3E8FB",
+    backgroundColor: "#FBFCFF",
+    borderRadius: 10,
+    padding: 10
+  },
+  monthlyHeadRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8
+  },
+  monthlyTitle: {
+    color: "#1F2937",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  monthlyStatus: {
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  monthlyTrack: {
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: "#ECF0FF",
+    overflow: "hidden"
+  },
+  monthlyFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#5C5CDB"
+  },
+  monthlyStatsRow: {
+    marginTop: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8
+  },
+  monthlyStatText: {
+    color: "#475569",
+    fontSize: 11,
+    fontFamily: "Sora_600SemiBold"
+  },
+  monthlyScaleHint: {
+    marginTop: 7,
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 16,
+    fontFamily: "Sora_600SemiBold"
+  },
+  motivationBox: {
+    marginTop: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#DED9FF",
+    backgroundColor: "#F4F2FF",
+    padding: 10
+  },
+  etaMessage: {
+    color: "#1F2937",
+    fontSize: 12,
+    lineHeight: 19,
+    fontFamily: "Sora_700Bold"
+  },
+  cardHeadRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6
+  },
+  editBtn: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    backgroundColor: "#F8FAFF"
+  },
+  editBtnText: {
+    color: "#2E2FA8",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  setupRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E6EBFB",
+    paddingVertical: 10,
+    gap: 12
+  },
+  setupRowLast: {
+    borderBottomWidth: 0
+  },
+  setupLabel: {
+    flex: 1,
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_600SemiBold"
+  },
+  setupValue: {
+    color: "#0F172A",
+    fontSize: 13,
+    fontFamily: "Sora_700Bold",
+    textAlign: "right"
+  },
+  premiumCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderColor: "#DDE3F4",
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: "#2F2F8F",
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2
+  },
+  premiumRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  premiumLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  premiumTitle: {
+    color: "#1F2937",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold"
+  },
+  premiumBadge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#E9D5FF",
+    backgroundColor: "#F5EDFF",
+    paddingHorizontal: 10,
+    paddingVertical: 5
+  },
+  premiumBadgeText: {
+    color: "#6D28D9",
+    fontSize: 11,
+    fontFamily: "Sora_700Bold"
+  },
+  sheetOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.35)"
+  },
+  sheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    paddingHorizontal: 14,
+    paddingTop: 10
+  },
+  sheetHandle: {
+    alignSelf: "center",
+    width: 42,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#D4DAFF",
+    marginBottom: 10
+  },
+  sheetTitle: {
+    color: "#1F2937",
+    fontSize: 15,
+    fontFamily: "Sora_700Bold",
+    marginBottom: 10
+  },
+  sheetLabel: {
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_600SemiBold",
+    marginBottom: 6
+  },
+  sheetInput: {
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#0F172A",
+    fontSize: 14,
+    fontFamily: "Sora_600SemiBold",
+    backgroundColor: "#FFFFFF",
+    marginBottom: 10
+  },
+  sheetActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 8,
+    marginTop: 2
+  },
+  sheetBtn: {
+    borderRadius: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 9
+  },
+  sheetBtnGhost: {
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#FFFFFF"
+  },
+  sheetBtnPrimary: {
+    backgroundColor: "#5C5CDB"
+  },
+  sheetBtnGhostText: {
+    color: "#2E2FA8",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  sheetBtnPrimaryText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  }
+});

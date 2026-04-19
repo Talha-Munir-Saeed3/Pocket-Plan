@@ -132,6 +132,12 @@ const formatDateChip = (dateValue) =>
   }).format(dateValue);
 
 const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
+const sanitizeNumber = (value) => value.replace(/[^0-9]/g, "");
+const formatNumberInput = (value) => {
+  const numeric = sanitizeNumber(String(value ?? ""));
+  if (!numeric) return "";
+  return Number(numeric).toLocaleString();
+};
 
 export default function AddTransactionScreen() {
   const router = useRouter();
@@ -151,6 +157,7 @@ export default function AddTransactionScreen() {
 
   const [type, setType] = useState("Expense");
   const [selectedCategory, setSelectedCategory] = useState("food");
+  const [amount, setAmount] = useState("");
   const [selectedDate, setSelectedDate] = useState(startOfDay(now));
   const [description, setDescription] = useState("");
   const [dateError, setDateError] = useState("");
@@ -250,7 +257,13 @@ export default function AddTransactionScreen() {
             <Text style={styles.inlineHintLabel}>Selected Type</Text>
             <Text style={styles.inlineHintValue}>{type}</Text>
           </View>
-          <InputField label="Amount" placeholder="PKR 0" keyboardType="numeric" />
+          <InputField
+            label="Amount"
+            placeholder="PKR 0"
+            keyboardType="number-pad"
+            value={formatNumberInput(amount)}
+            onChangeText={(text) => setAmount(sanitizeNumber(text))}
+          />
 
           <Text style={styles.sliderLabel}>Date</Text>
           <View style={styles.wheelCard}>
