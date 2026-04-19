@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
+import { Ionicons } from "@expo/vector-icons";
 
 import ScreenContainer from "../../components/common/screenContainer";
 
@@ -32,7 +33,7 @@ export default function BudgetHelpScreen() {
           <View style={styles.heroRow}>
             <Text style={styles.heroTitle}>Budget Help</Text>
             <Pressable style={styles.closeBtn} onPress={() => router.back()}>
-              <Text style={styles.closeBtnText}>Close</Text>
+              <Ionicons name="close" size={16} color="#FFFFFF" />
             </Pressable>
           </View>
           <Text style={styles.heroSub}>
@@ -41,44 +42,76 @@ export default function BudgetHelpScreen() {
         </LinearGradient>
 
         {section === "allocation" ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Allocation Tab Help</Text>
-            <Text style={styles.sectionHead}>Steps</Text>
+          <View style={styles.sectionStack}>
+            <View style={[styles.sectionBox, styles.boxPurple]}>
+            <Text style={styles.sectionHead}>🟣 Steps</Text>
             <Text style={styles.item}>1. Enter monthly budget first.</Text>
             <Text style={styles.item}>2. Allocate limits per category.</Text>
             <Text style={styles.item}>3. Use Split Evenly if you want a quick balanced start.</Text>
             <Text style={styles.item}>4. Fine tune categories based on your spending priorities.</Text>
             <Text style={styles.item}>5. Save Snapshot if you want to reuse this plan later.</Text>
+            </View>
 
-            <Text style={styles.sectionHead}>When To Allocate</Text>
+            <View style={[styles.sectionBox, styles.boxGreen]}>
+            <Text style={styles.sectionHead}>🟢 When To Allocate</Text>
             <Text style={styles.item}>Best practice is to set allocation at the start of the month, then adjust as needed if your real spending pattern changes.</Text>
+            </View>
 
-            <Text style={styles.sectionHead}>Mid-Month Update Warning</Text>
+            <View style={[styles.sectionBox, styles.boxAmber]}>
+            <Text style={styles.sectionHead}>🟡 Mid-Month Update Warning</Text>
             <Text style={styles.item}>If you edit after spending has already started, you will see a warning for transparency.</Text>
             <Text style={styles.item}>Warning options:</Text>
             <Text style={styles.item}>- Cancel</Text>
             <Text style={styles.item}>- Update Anyway</Text>
             <Text style={styles.item}>- Don't Show Again (for the rest of this Allocation session)</Text>
+            </View>
 
-            <Text style={styles.sectionHead}>Clear Plan Warning</Text>
+            <View style={[styles.sectionBox, styles.boxRed]}>
+            <Text style={styles.sectionHead}>🔴 Clear Plan Warning</Text>
             <Text style={styles.item}>Clear Plan shows a confirmation dialog before resetting all limits to 0.</Text>
+            </View>
 
-            <Text style={styles.sectionHead}>Split Evenly Example</Text>
+            <View style={[styles.sectionBox, styles.boxPurple]}>
+            <Text style={styles.sectionHead}>🟣 Split Evenly Example</Text>
             <Text style={styles.item}>Example: Budget = PKR 75,000 and 5 categories selected. Each category gets PKR 15,000 (or near-even distribution when remainder exists).</Text>
+            </View>
 
-            <Text style={styles.sectionHead}>Save Snapshot</Text>
+            <View style={[styles.sectionBox, styles.boxGrey]}>
+            <Text style={styles.sectionHead}>⚫ Save Snapshot</Text>
             <Text style={styles.item}>Saves the current plan for quick reload in this session. (Will be removed once APIs are created to reduce load and auto-save.)</Text>
+            </View>
           </View>
         ) : (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Overview Tab Help</Text>
+          <View style={styles.sectionStack}>
+            <View style={[styles.sectionBox, styles.boxPurple]}>
+            <Text style={styles.sectionHead}>🟣 How It Works</Text>
             <Text style={styles.item}>Overview shows progress only for categories where spending exists.</Text>
-            <Text style={styles.sectionHead}>Color Mapping</Text>
-            <Text style={styles.item}>- Green = 0% to 60%</Text>
-            <Text style={styles.item}>- Amber = 61% to 80%</Text>
-            <Text style={styles.item}>- Orange = 81% to 99%</Text>
-            <Text style={styles.item}>- Red = 100% and above</Text>
-            <Text style={styles.item}>Use the Over Limit and Critical summary cards first to identify risk categories quickly.</Text>
+            </View>
+
+            <View style={[styles.sectionBox, styles.boxAmber]}>
+            <Text style={styles.sectionHead}>🟡 Visual Status Guide</Text>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: "#16A34A" }]} />
+              <Text style={styles.item}>0% to 60% used</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: "#D97706" }]} />
+              <Text style={styles.item}>61% to 80% used</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: "#EA580C" }]} />
+              <Text style={styles.item}>81% to 99% used (critical)</Text>
+            </View>
+            <View style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />
+              <Text style={styles.item}>100%+ used (over limit)</Text>
+            </View>
+            </View>
+
+            <View style={[styles.sectionBox, styles.boxRed]}>
+            <Text style={styles.sectionHead}>🔴 Priority Check</Text>
+            <Text style={styles.item}>Use Over Limit and Critical summary cards first to identify risk categories quickly.</Text>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -126,23 +159,36 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "rgba(255,255,255,0.16)"
   },
-  closeBtnText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontFamily: "Sora_700Bold"
+  sectionStack: {
+    gap: 10
   },
-  card: {
+  sectionBox: {
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#DDE3F4",
+    borderLeftWidth: 4,
     padding: 12
   },
-  cardTitle: {
-    color: "#1F2937",
-    fontSize: 14,
-    fontFamily: "Sora_700Bold",
-    marginBottom: 8
+  boxGreen: {
+    borderLeftColor: "#16A34A",
+    backgroundColor: "#F5FFF8"
+  },
+  boxAmber: {
+    borderLeftColor: "#D97706",
+    backgroundColor: "#FFF9F2"
+  },
+  boxRed: {
+    borderLeftColor: "#DC2626",
+    backgroundColor: "#FFF6F6"
+  },
+  boxPurple: {
+    borderLeftColor: "#6D28D9",
+    backgroundColor: "#F8F5FF"
+  },
+  boxGrey: {
+    borderLeftColor: "#4B5563",
+    backgroundColor: "#F8FAFC"
   },
   sectionHead: {
     color: "#1F2937",
@@ -150,6 +196,17 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_700Bold",
     marginTop: 6,
     marginBottom: 4
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 2
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999
   },
   item: {
     color: "#334155",
