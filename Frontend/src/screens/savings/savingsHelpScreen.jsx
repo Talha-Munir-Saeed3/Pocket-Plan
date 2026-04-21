@@ -55,6 +55,22 @@ export default function SavingsHelpScreen() {
             </View>
 
             <View style={[styles.sectionBox, styles.boxAmber]}>
+              <Text style={styles.sectionHead}>🟡 Status Scale (With Colors)</Text>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#16A34A" }]} />
+                <Text style={styles.item}>On Track = 100% and above</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#EAB308" }]} />
+                <Text style={styles.item}>Caution = 75% to 99%</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />
+                <Text style={styles.item}>Off Track = below 75%</Text>
+              </View>
+            </View>
+
+            <View style={[styles.sectionBox, styles.boxAmber]}>
               <Text style={styles.sectionHead}>🟡 What To Check First</Text>
               <Text style={styles.item}>1. Monthly Progress status (On Track/Caution/Off Track)</Text>
               <Text style={styles.item}>2. ETA in months</Text>
@@ -69,6 +85,11 @@ export default function SavingsHelpScreen() {
               <Text style={styles.item}>Remaining = PKR 107,500</Text>
               <Text style={styles.item}>Monthly Saving = PKR 12,000</Text>
               <Text style={styles.item}>107,500 / 12,000 = 8.95, so ETA shown is 9 months.</Text>
+            </View>
+
+            <View style={[styles.sectionBox, styles.boxPurple]}>
+              <Text style={styles.sectionHead}>🟣 Progress Bar Interaction</Text>
+              <Text style={styles.item}>Tap the total or monthly progress bar to reveal the exact percentage on the bar.</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxGrey]}>
@@ -198,5 +219,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontFamily: "Sora_600SemiBold",
     marginBottom: 5
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 2
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999
   }
 });

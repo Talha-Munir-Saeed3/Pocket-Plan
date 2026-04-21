@@ -28,6 +28,8 @@ export default function SavingsGoalScreen() {
   const [draftGoalName, setDraftGoalName] = useState(goalName);
   const [draftTargetAmount, setDraftTargetAmount] = useState(targetAmount);
   const [draftMonthlyContribution, setDraftMonthlyContribution] = useState(monthlyContribution);
+  const [showOverallPercent, setShowOverallPercent] = useState(false);
+  const [showMonthlyPercent, setShowMonthlyPercent] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -78,6 +80,16 @@ export default function SavingsGoalScreen() {
     setIsSheetOpen(false);
   };
 
+  const revealOverallProgress = () => {
+    setShowOverallPercent(true);
+    setTimeout(() => setShowOverallPercent(false), 1600);
+  };
+
+  const revealMonthlyProgress = () => {
+    setShowMonthlyPercent(true);
+    setTimeout(() => setShowMonthlyPercent(false), 1600);
+  };
+
   if (!fontsLoaded) return null;
 
   return (
@@ -86,17 +98,16 @@ export default function SavingsGoalScreen() {
         <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
           <View style={styles.heroTopRow}>
             <Text style={styles.heroTitle}>Savings Goal</Text>
-            <View style={styles.heroRightRow}>
-              <Text style={styles.heroSub}>{daysLeft} days left</Text>
-              <Pressable
-                style={styles.headerHelpButton}
-                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                onPress={() => router.push(`/savings-help?section=${activeView}`)}
-              >
-                <Text style={styles.headerHelpText}>?</Text>
-              </Pressable>
-            </View>
+            <Pressable
+              style={styles.headerHelpButton}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+              onPress={() => router.push(`/savings-help?section=${activeView}`)}
+            >
+              <Text style={styles.headerHelpText}>?</Text>
+            </Pressable>
           </View>
+
+          <Text style={styles.heroSub}>{startedLabel} · {daysLeft} days left</Text>
 
           <View style={styles.pillsRow}>
             <View style={styles.pill}>
@@ -131,42 +142,60 @@ export default function SavingsGoalScreen() {
 
         {activeView === "overview" ? (
           <View style={styles.card}>
-            <View style={styles.sectionHeadRow}>
-              <Text style={styles.sectionTitle}>Overview</Text>
-              <View style={[styles.healthBadge, { borderColor: monthlyHealthColor, backgroundColor: `${monthlyHealthColor}1A` }]}>
-                <Text style={[styles.healthBadgeText, { color: monthlyHealthColor }]}>{monthlyHealth}</Text>
+            <Text style={styles.sectionTitle}>Goal Progress</Text>
+            <Text style={styles.goalContextText}>Main Goal: {goalName} ({toCurrency(targetValue)})</Text>
+
+            <Pressable style={styles.progressTrackWrap} onPress={revealOverallProgress}>
+              {showOverallPercent ? (
+                <View style={[styles.progressBubble, { left: `${Math.min(95, Math.max(6, progress))}%` }]}>
+                  <Text style={styles.progressBubbleText}>{Math.max(0, progress)}%</Text>
+                </View>
+              ) : null}
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, progress))}%` }]} />
               </View>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, progress))}%` }]} />
-            </View>
+            </Pressable>
 
-            <View style={styles.overviewRow}>
-              <Text style={styles.progressPercent}>Total Goal Progress: {Math.max(0, progress)}%</Text>
-              <Text style={styles.overviewEta}>Estimated Time Left: {monthsToGoal} months</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Saved So Far</Text>
+              <Text style={styles.statValue}>{toCurrency(savedValue)}</Text>
             </View>
-
-            <Text style={styles.metricLine}>Saved So Far: {toCurrency(savedValue)}</Text>
-            <Text style={styles.metricLine}>Remaining To Goal: {toCurrency(remaining)}</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Remaining To Goal</Text>
+              <Text style={styles.statValue}>{toCurrency(remaining)}</Text>
+            </View>
 
             <View style={styles.monthlyCard}>
               <View style={styles.monthlyHeadRow}>
                 <Text style={styles.monthlyTitle}>Monthly Progress</Text>
-                <Text style={[styles.monthlyStatus, { color: monthlyHealthColor }]}>{Math.max(0, monthlyProgress)}% ({monthlyHealth})</Text>
+                <View style={[styles.healthBadge, { borderColor: monthlyHealthColor, backgroundColor: `${monthlyHealthColor}1A` }]}>
+                  <Text style={[styles.healthBadgeText, { color: monthlyHealthColor }]}>{monthlyHealth}</Text>
+                </View>
               </View>
-              <View style={styles.monthlyTrack}>
-                <View style={[styles.monthlyFill, { width: `${Math.min(100, Math.max(0, monthlyProgress))}%` }]} />
-              </View>
+              <Text style={styles.monthlyContextText}>This compares your current monthly saving against the recommended monthly amount.</Text>
+
+              <Pressable style={styles.progressTrackWrap} onPress={revealMonthlyProgress}>
+                {showMonthlyPercent ? (
+                  <View style={[styles.progressBubble, { left: `${Math.min(95, Math.max(6, monthlyProgress))}%`, backgroundColor: monthlyHealthColor }]}>
+                    <Text style={styles.progressBubbleText}>{Math.max(0, monthlyProgress)}%</Text>
+                  </View>
+                ) : null}
+                <View style={styles.monthlyTrack}>
+                  <View style={[styles.monthlyFill, { width: `${Math.min(100, Math.max(0, monthlyProgress))}%`, backgroundColor: monthlyHealthColor }]} />
+                </View>
+              </Pressable>
+
               <View style={styles.monthlyStatsRow}>
                 <Text style={styles.monthlyStatText}>Recommended: {toCurrency(recommendedMonthly)}/mo</Text>
                 <Text style={styles.monthlyStatText}>Current: {toCurrency(monthlyValue)}/mo</Text>
               </View>
-              <Text style={styles.monthlyScaleHint}>Scale: On Track at least 100% | Caution 75-99% | Off Track below 75%</Text>
             </View>
 
             <View style={styles.motivationBox}>
               <Text style={styles.etaMessage}>{paceMessage}</Text>
             </View>
+
+            <View style={styles.overviewFooterSpace} />
           </View>
         ) : null}
 
@@ -277,7 +306,7 @@ const styles = StyleSheet.create({
   hero: {
     marginHorizontal: -14,
     paddingHorizontal: 14,
-    paddingBottom: 14,
+    paddingBottom: 16,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     marginBottom: 12
@@ -294,10 +323,11 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: "#FFFFFF",
-    fontSize: 26,
+    fontSize: 29,
     fontFamily: "Sora_800ExtraBold"
   },
   heroSub: {
+    marginTop: 6,
     color: "#DCE2FF",
     fontSize: 13,
     fontFamily: "Sora_600SemiBold"
@@ -347,7 +377,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderColor: "#DDE3F4",
     borderWidth: 1,
-    padding: 12,
+    padding: 16,
     marginBottom: 10,
     shadowColor: "#2F2F8F",
     shadowOpacity: 0.06,
@@ -380,29 +410,65 @@ const styles = StyleSheet.create({
   viewTabTextActive: {
     color: "#FFFFFF"
   },
-  sectionHeadRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8
-  },
   sectionTitle: {
     color: "#1F2937",
     fontSize: 14,
     fontFamily: "Sora_700Bold",
-    marginBottom: 0
+    marginBottom: 6
+  },
+  goalContextText: {
+    color: "#475569",
+    fontSize: 12,
+    fontFamily: "Sora_600SemiBold",
+    marginBottom: 12
+  },
+  progressTrackWrap: {
+    marginBottom: 12,
+    position: "relative",
+    paddingTop: 22
   },
   progressTrack: {
-    height: 16,
+    height: 20,
     borderRadius: 999,
     backgroundColor: "#EEF2FF",
     overflow: "hidden",
-    marginBottom: 10
+    marginBottom: 2
   },
   progressFill: {
     height: "100%",
     borderRadius: 999,
     backgroundColor: "#5C5CDB"
+  },
+  progressBubble: {
+    position: "absolute",
+    top: -2,
+    transform: [{ translateX: -18 }],
+    backgroundColor: "#5C5CDB",
+    borderRadius: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 3
+  },
+  progressBubbleText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontFamily: "Sora_700Bold"
+  },
+  statRow: {
+    marginTop: -1,
+    marginBottom: 6,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  statLabel: {
+    color: "#64748B",
+    fontSize: 11,
+    fontFamily: "Sora_600SemiBold"
+  },
+  statValue: {
+    color: "#334155",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
   },
   progressPercent: {
     color: "#4C46C8",
@@ -419,57 +485,41 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Sora_700Bold"
   },
-  overviewRow: {
-    marginBottom: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  overviewEta: {
-    color: "#334155",
-    fontSize: 12,
-    fontFamily: "Sora_700Bold"
-  },
-  metricLine: {
-    color: "#334155",
-    fontSize: 13,
-    fontFamily: "Sora_600SemiBold",
-    marginBottom: 4
-  },
-  monthlyLine: {
-    color: "#475569",
-    fontSize: 12,
-    fontFamily: "Sora_700Bold",
-    marginBottom: 4
-  },
   monthlyCard: {
-    marginTop: 8,
+    marginTop: 14,
     borderWidth: 1,
     borderColor: "#E3E8FB",
     backgroundColor: "#FBFCFF",
     borderRadius: 10,
-    padding: 10
+    padding: 12
   },
   monthlyHeadRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8
+    marginBottom: 10
   },
   monthlyTitle: {
     color: "#1F2937",
     fontSize: 12,
     fontFamily: "Sora_700Bold"
   },
+  monthlyContextText: {
+    color: "#475569",
+    fontSize: 12,
+    fontFamily: "Sora_600SemiBold",
+    marginBottom: 4
+  },
   monthlyStatus: {
     fontSize: 12,
     fontFamily: "Sora_700Bold"
   },
   monthlyTrack: {
-    height: 10,
+    height: 14,
     borderRadius: 999,
     backgroundColor: "#ECF0FF",
-    overflow: "hidden"
+    overflow: "hidden",
+    position: "relative"
   },
   monthlyFill: {
     height: "100%",
@@ -477,36 +527,32 @@ const styles = StyleSheet.create({
     backgroundColor: "#5C5CDB"
   },
   monthlyStatsRow: {
-    marginTop: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8
+    marginTop: 10,
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 4
   },
   monthlyStatText: {
     color: "#475569",
     fontSize: 11,
     fontFamily: "Sora_600SemiBold"
   },
-  monthlyScaleHint: {
-    marginTop: 7,
-    color: "#64748B",
-    fontSize: 11,
-    lineHeight: 16,
-    fontFamily: "Sora_600SemiBold"
-  },
   motivationBox: {
-    marginTop: 8,
+    marginTop: 14,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#DED9FF",
     backgroundColor: "#F4F2FF",
-    padding: 10
+    padding: 12
   },
   etaMessage: {
     color: "#1F2937",
     fontSize: 12,
     lineHeight: 19,
     fontFamily: "Sora_700Bold"
+  },
+  overviewFooterSpace: {
+    height: 28
   },
   cardHeadRow: {
     flexDirection: "row",
