@@ -42,6 +42,7 @@ This document defines available visual themes and the implementation approach fo
 - The box color maps to headers, key cards, and active controls.
 - The background color maps to app screen backgrounds.
 - The text color maps to primary content text for readability.
+- Themes UI Block will be shown and the option will be in settings.
 
 ## Implementation Architecture
 
