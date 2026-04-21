@@ -45,6 +45,7 @@ Recommended icon usage:
 - Green guidance sections: `color-palette`, `checkmark-circle`, or `layers`
 - Amber advisory sections: `bulb`, `warning`, or `alert-circle`
 - Red critical sections: `alert`, `close-circle`, or `trash`
+- Grey secondary sections: `information-circle`, `document-text`, or `ellipsis-horizontal-circle`
 
 Implementation notes:
 

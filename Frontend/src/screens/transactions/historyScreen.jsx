@@ -228,10 +228,10 @@ export default function HistoryScreen() {
 
             {activeTab === "Transactions" ? (
               <View style={styles.filtersRow}>
-                {["All", "Expenses", "Income", "This Week"].map((filter) => (
+                {["All", "Expenses", "Income", "This Week"].map((filter, index) => (
                   <Pressable
                     key={filter}
-                    style={[styles.filterChip, activeFilter === filter && styles.filterChipActive]}
+                    style={[styles.filterChip, index === 3 && styles.filterChipLast, activeFilter === filter && styles.filterChipActive]}
                     onPress={() => setActiveFilter(filter)}
                   >
                     <Text style={[styles.filterChipText, activeFilter === filter && styles.filterChipTextActive]}>{filter}</Text>
@@ -443,18 +443,21 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 10,
     minHeight: 66,
-    justifyContent: "space-between"
+    justifyContent: "center",
+    alignItems: "center"
   },
   heroStatLabel: {
     color: "#DBE2FF",
     fontSize: 11,
-    fontFamily: "Sora_600SemiBold"
+    fontFamily: "Sora_600SemiBold",
+    textAlign: "center"
   },
   heroStatValue: {
     color: "#FFFFFF",
     marginTop: 4,
     fontSize: 13,
-    fontFamily: "Sora_700Bold"
+    fontFamily: "Sora_700Bold",
+    textAlign: "center"
   },
   bodyContainer: {
     backgroundColor: "#F4F4FF",
@@ -534,7 +537,7 @@ const styles = StyleSheet.create({
   },
   filtersRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    flexWrap: "nowrap",
     marginTop: 10
   },
   goalInfoWrap: {
@@ -552,14 +555,17 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_600SemiBold"
   },
   filterChip: {
+    flex: 1,
     borderWidth: 1,
     borderColor: "#D7DEEF",
     backgroundColor: "#F8FAFF",
     marginRight: 8,
-    marginBottom: 8,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 999
+  },
+  filterChipLast: {
+    marginRight: 0
   },
   filterChipActive: {
     borderColor: "#5C5CDB",
@@ -568,7 +574,8 @@ const styles = StyleSheet.create({
   filterChipText: {
     color: "#2E2FA8",
     fontSize: 13,
-    fontFamily: "Sora_700Bold"
+    fontFamily: "Sora_700Bold",
+    textAlign: "center"
   },
   filterChipTextActive: {
     color: "#FFFFFF"
