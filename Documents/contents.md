@@ -13,5 +13,5 @@ Use product-docs/ to paste all planning files in one place (wireframes, WBS, pro
 
 Additional reference file:
 
-- product-docs/Theme Options.md
+- frontend-guidelines/themes-implementation-and-options.md
 - frontend-guidelines/help-screen-format.md
