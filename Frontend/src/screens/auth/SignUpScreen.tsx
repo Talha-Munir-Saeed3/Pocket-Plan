@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -100,11 +100,29 @@ export default function SignUpScreen() {
       };
 
   const flagOverrides: Record<string, string> = {
+    ANG: "NL",
     EUR: "EU",
+    NLG: "NL",
     XCD: "AG",
     XOF: "SN",
     XAF: "CM",
     XPF: "PF"
+  };
+
+  const symbolOverrides: Record<string, string> = {
+    AMD: "֏", // Armenian Dram
+    BIF: "Fr", // Burundian Franc
+    GMD: "D", // Gambian Dalasi
+    GNF: "Fr", // Guinean Franc
+    IRR: "﷼", // Iranian Rial
+    JOD: "JD", // Jordanian Dinar
+    KMF: "Fr", // Comorian Franc
+    SDG: "£", // Sudanese Pound
+    TJS: "SM", // Tajikistani Somoni
+    TND: "DT", // Tunisian Dinar
+    XOF: "CFA", // CFA Franc
+    XPF: "₣", // CFP Franc
+    YER: "﷼" // Yemeni Rial
   };
 
   const toFlag = (countryCode: string) => {
@@ -132,7 +150,7 @@ export default function SignUpScreen() {
         return {
           code,
           name: detail?.name ?? code,
-          symbol: detail?.units?.major?.symbol ?? "",
+          symbol: symbolOverrides[code] ?? detail?.units?.major?.symbol ?? "",
           flag: toFlag(countryCode)
         };
       })
@@ -153,6 +171,51 @@ export default function SignUpScreen() {
   const selectedCurrency = useMemo(
     () => currencyEntries.find((item) => item.code === currency) ?? currencyEntries[0],
     [currency, currencyEntries]
+  );
+
+  const onSelectCurrency = useCallback((code: string) => {
+    setCurrency(code);
+    setCurrencyModalVisible(false);
+    setCurrencyQuery("");
+  }, []);
+
+  const renderCurrencyItem = useCallback(
+    ({ item }: { item: { code: string; name: string; symbol: string; flag: string } }) => {
+      const selected = item.code === currency;
+      return (
+        <Pressable
+          onPress={() => onSelectCurrency(item.code)}
+          style={[
+            styles.currencyRow,
+            {
+              backgroundColor: selected ? "rgba(92, 92, 219, 0.14)" : "transparent",
+              borderColor: selected ? "#5C5CDB" : palette.inputBorder
+            }
+          ]}
+        >
+          <View style={styles.currencyLeftCol}>
+            <Text style={styles.currencyFlag}>{item.flag}</Text>
+            <View>
+              <Text style={[styles.currencyCodeName, { color: palette.text }]}> 
+                {item.code}  {item.name}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={[styles.currencySymbol, { color: palette.muted }]}>{item.symbol || item.code}</Text>
+        </Pressable>
+      );
+    },
+    [currency, onSelectCurrency, palette.inputBorder, palette.muted, palette.text]
+  );
+
+  const getCurrencyItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: 62,
+      offset: 62 * index,
+      index
+    }),
+    []
   );
 
   const stepOneValid = email.includes("@") && password.length >= 8;
@@ -333,38 +396,15 @@ export default function SignUpScreen() {
                   <FlatList
                     data={filteredCurrencies}
                     keyExtractor={(item) => item.code}
+                    renderItem={renderCurrencyItem}
+                    initialNumToRender={16}
+                    maxToRenderPerBatch={20}
+                    windowSize={8}
+                    updateCellsBatchingPeriod={40}
+                    removeClippedSubviews
+                    getItemLayout={getCurrencyItemLayout}
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => {
-                      const selected = item.code === currency;
-                      return (
-                        <Pressable
-                          onPress={() => {
-                            setCurrency(item.code);
-                            setCurrencyModalVisible(false);
-                            setCurrencyQuery("");
-                          }}
-                          style={[
-                            styles.currencyRow,
-                            {
-                              backgroundColor: selected ? "rgba(92, 92, 219, 0.14)" : "transparent",
-                              borderColor: selected ? "#5C5CDB" : palette.inputBorder
-                            }
-                          ]}
-                        >
-                          <View style={styles.currencyLeftCol}>
-                            <Text style={styles.currencyFlag}>{item.flag}</Text>
-                            <View>
-                              <Text style={[styles.currencyCodeName, { color: palette.text }]}>
-                                {item.code}  {item.name}
-                              </Text>
-                            </View>
-                          </View>
-
-                          <Text style={[styles.currencySymbol, { color: palette.muted }]}>{item.symbol || item.code}</Text>
-                        </Pressable>
-                      );
-                    }}
                   />
                 </View>
               </View>
