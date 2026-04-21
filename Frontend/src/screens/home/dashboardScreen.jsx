@@ -41,11 +41,11 @@ export default function DashboardScreen() {
   const openAddTransaction = () => {
     if (addTransactionLockRef.current) return;
     addTransactionLockRef.current = true;
-    router.push("/add-transaction");
+    router.navigate("/add-transaction");
 
     setTimeout(() => {
       addTransactionLockRef.current = false;
-    }, 700);
+    }, 1200);
   };
 
   return (
