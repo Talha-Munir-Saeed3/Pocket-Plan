@@ -17,20 +17,46 @@ export default function ChatScreen() {
   return (
     <ScreenContainer style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={styles.hero}>
-          <View style={styles.heroCircle} />
+        <LinearGradient colors={["#16193B", "#5C5CDB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+          <View style={styles.heroCircleA} />
+          <View style={styles.heroCircleB} />
+          <Text style={styles.heroKicker}>Assistant</Text>
           <Text style={styles.heroTitle}>AI Money Coach</Text>
-          <Text style={styles.heroSubtitle}>Get personalized savings tips using your latest spending patterns.</Text>
+          <Text style={styles.heroSubtitle}>Ask for spending analysis, savings plans, or quick budget decisions.</Text>
+
+          <View style={styles.heroTagsRow}>
+            <View style={styles.heroTag}>
+              <Text style={styles.heroTagText}>Live Suggestions</Text>
+            </View>
+            <View style={styles.heroTag}>
+              <Text style={styles.heroTagText}>Goal Planning</Text>
+            </View>
+            <View style={styles.heroTag}>
+              <Text style={styles.heroTagText}>Weekly Review</Text>
+            </View>
+          </View>
         </LinearGradient>
 
-        <View style={[styles.messageBubble, styles.assistantBubble, styles.shadowCard]}>
-          <Text style={styles.messageAuthor}>Assistant</Text>
-          <Text style={styles.messageText}>You are at 58% of your monthly budget. Consider reducing food spend this week.</Text>
+        <View style={styles.insightCard}>
+          <Text style={styles.insightTitle}>Current Snapshot</Text>
+          <Text style={styles.insightText}>You are at 58% of your monthly budget and food spending is trending above plan by 9%.</Text>
         </View>
 
-        <View style={[styles.messageBubble, styles.userBubble]}>
-          <Text style={[styles.messageAuthor, styles.userAuthor]}>You</Text>
-          <Text style={[styles.messageText, styles.userText]}>How can I save an extra 5,000 this month?</Text>
+        <View style={styles.chatCard}>
+          <View style={[styles.messageBubble, styles.assistantBubble]}>
+            <Text style={styles.messageAuthor}>Assistant</Text>
+            <Text style={styles.messageText}>You are at 58% of your monthly budget. Consider reducing food spend this week.</Text>
+          </View>
+
+          <View style={[styles.messageBubble, styles.userBubble]}>
+            <Text style={[styles.messageAuthor, styles.userAuthor]}>You</Text>
+            <Text style={[styles.messageText, styles.userText]}>How can I save an extra 5,000 this month?</Text>
+          </View>
+
+          <View style={[styles.messageBubble, styles.assistantBubble]}>
+            <Text style={styles.messageAuthor}>Assistant</Text>
+            <Text style={styles.messageText}>Start by reducing ride costs 15% and shopping 12%. That should free around PKR 5,400 this month.</Text>
+          </View>
         </View>
 
         <Text style={styles.quickPromptTitle}>Quick prompts</Text>
@@ -43,9 +69,10 @@ export default function ChatScreen() {
         </View>
 
         <View style={styles.composerCard}>
+          <Text style={styles.composerLabel}>Ask Pocket Plan AI</Text>
           <TextInput
             style={styles.composerInput}
-            placeholder="Type your question"
+            placeholder="Type a budgeting or savings question"
             placeholderTextColor="#9CA3AF"
             value={prompt}
             onChangeText={setPrompt}
@@ -63,40 +90,97 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4FF"
   },
   content: {
-    padding: 18,
+    padding: 16,
     paddingBottom: 28
   },
   hero: {
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 14,
+    borderRadius: 28,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
+    marginBottom: 12,
     overflow: "hidden"
   },
-  heroCircle: {
+  heroCircleA: {
     position: "absolute",
-    width: 160,
-    height: 160,
+    width: 136,
+    height: 136,
     borderRadius: 999,
-    top: -30,
-    right: -40,
-    backgroundColor: "rgba(255,255,255,0.14)"
+    top: -22,
+    right: -34,
+    backgroundColor: "rgba(255,255,255,0.15)"
+  },
+  heroCircleB: {
+    position: "absolute",
+    width: 220,
+    height: 66,
+    left: -60,
+    bottom: -32,
+    transform: [{ rotate: "-12deg" }],
+    backgroundColor: "rgba(255,255,255,0.11)"
+  },
+  heroKicker: {
+    color: "rgba(229,232,255,0.9)",
+    fontSize: 12,
+    fontWeight: "700"
   },
   heroTitle: {
     color: "#FFFFFF",
-    fontSize: 26,
+    marginTop: 6,
+    fontSize: 27,
     fontWeight: "900"
   },
   heroSubtitle: {
-    color: "#D6DFFF",
-    fontSize: 14,
-    marginTop: 6
+    color: "rgba(237,240,255,0.92)",
+    fontSize: 13.5,
+    marginTop: 8
   },
-  shadowCard: {
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2
+  heroTagsRow: {
+    marginTop: 12,
+    flexDirection: "row",
+    flexWrap: "wrap"
+  },
+  heroTag: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    marginBottom: 8
+  },
+  heroTagText: {
+    color: "#E4E7FF",
+    fontWeight: "800",
+    fontSize: 11.5
+  },
+  insightCard: {
+    backgroundColor: "#F8FAFF",
+    borderWidth: 1,
+    borderColor: "#D7DEEF",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10
+  },
+  insightTitle: {
+    color: "#3730A3",
+    fontSize: 13,
+    fontWeight: "900"
+  },
+  insightText: {
+    color: "#334155",
+    marginTop: 4,
+    lineHeight: 19,
+    fontSize: 13
+  },
+  chatCard: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12
   },
   messageBubble: {
     borderRadius: 16,
@@ -105,14 +189,14 @@ const styles = StyleSheet.create({
     borderWidth: 1
   },
   assistantBubble: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E2E8F0",
-    marginRight: 28
+    backgroundColor: "#F8FAFF",
+    borderColor: "#DCE4F2",
+    marginRight: 24
   },
   userBubble: {
     backgroundColor: "#EEF0FF",
     borderColor: "#D7DDFF",
-    marginLeft: 28
+    marginLeft: 24
   },
   messageAuthor: {
     color: "#4338CA",
@@ -140,7 +224,6 @@ const styles = StyleSheet.create({
   quickPromptWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
     marginBottom: 12
   },
   quickPromptChip: {
@@ -149,7 +232,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D7DDFF",
     paddingVertical: 8,
-    paddingHorizontal: 12
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8
   },
   quickPromptText: {
     color: "#2E2FA8",
@@ -162,6 +247,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     padding: 12
+  },
+  composerLabel: {
+    color: "#111827",
+    fontWeight: "800",
+    fontSize: 13,
+    marginBottom: 8
   },
   composerInput: {
     minHeight: 72,

@@ -35,6 +35,24 @@ Use these meanings consistently:
 - 🟣 Purple: Feature explanation and how-it-works content.
 - ⚫ Grey: Temporary or less important information.
 
+## Heading Icon Pattern (New Standard)
+
+Use a colored UI icon before each section heading, not just emoji text.
+
+Recommended icon usage:
+
+- Purple explanation sections: `time`, `flag`, or `information-circle`
+- Green guidance sections: `color-palette`, `checkmark-circle`, or `layers`
+- Amber advisory sections: `bulb`, `warning`, or `alert-circle`
+- Red critical sections: `alert`, `close-circle`, or `trash`
+
+Implementation notes:
+
+- Place icon and heading text in one row (`headRow`) with vertical alignment.
+- Match icon color to the section semantic color.
+- Keep icon size compact (around 16) so heading remains readable.
+- Keep icon spacing consistent (small left-to-right gap before heading text).
+
 ## Visual Status Legend Pattern (Overview-type help)
 
 When showing progress/severity states, use physical color dots with labels.
@@ -45,6 +63,8 @@ Example:
 - Amber dot: 61% to 80% used
 - Orange dot: 81% to 99% used (critical)
 - Red dot: 100%+ used (over limit)
+
+For help sections that explain UI colors, prefer icon markers in rows (for example small filled circles) plus short labels.
 
 ## Section Box Pattern
 
@@ -72,6 +92,8 @@ This format is currently used in:
 
 - Budget Help (Overview + Allocation)
 - Add Transaction Help
+- Savings Help
+- History Help (Transactions + Goals)
 
 ## Future Guidance
 
