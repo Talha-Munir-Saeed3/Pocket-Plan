@@ -1,84 +1,91 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
+import { Ionicons } from "@expo/vector-icons";
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
 
 export default function ChatScreen() {
+  const insets = useSafeAreaInsets();
   const [prompt, setPrompt] = useState("");
+  const [fontsLoaded] = useFonts({
+    Sora_500Medium,
+    Sora_600SemiBold,
+    Sora_700Bold,
+    Sora_800ExtraBold
+  });
+
+  if (!fontsLoaded) return null;
 
   const quickPrompts = [
     "How to save 5,000 this week?",
     "Where am I overspending?",
-    "Plan my budget for next month"
+    "Plan my budget for next month",
+    "What can I cut today without stress?"
   ];
 
   return (
-    <ScreenContainer style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#16193B", "#5C5CDB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 22 }]} showsVerticalScrollIndicator={false}>
+        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
           <View style={styles.heroCircleA} />
           <View style={styles.heroCircleB} />
-          <Text style={styles.heroKicker}>Assistant</Text>
-          <Text style={styles.heroTitle}>AI Money Coach</Text>
-          <Text style={styles.heroSubtitle}>Ask for spending analysis, savings plans, or quick budget decisions.</Text>
-
-          <View style={styles.heroTagsRow}>
-            <View style={styles.heroTag}>
-              <Text style={styles.heroTagText}>Live Suggestions</Text>
+          <View style={styles.heroTopRow}>
+            <View>
+              <Text style={styles.heroKicker}>Assistant</Text>
+              <Text style={styles.heroTitle}>AI Money Coach</Text>
             </View>
-            <View style={styles.heroTag}>
-              <Text style={styles.heroTagText}>Goal Planning</Text>
-            </View>
-            <View style={styles.heroTag}>
-              <Text style={styles.heroTagText}>Weekly Review</Text>
+            <View style={styles.heroStatusPill}>
+              <View style={styles.heroStatusDot} />
+              <Text style={styles.heroStatusText}>Online</Text>
             </View>
           </View>
+          <Text style={styles.heroSubtitle}>Ask for spending analysis, savings plans, and instant trade-off decisions.</Text>
         </LinearGradient>
 
-        <View style={styles.insightCard}>
-          <Text style={styles.insightTitle}>Current Snapshot</Text>
-          <Text style={styles.insightText}>You are at 58% of your monthly budget and food spending is trending above plan by 9%.</Text>
-        </View>
+        <View style={styles.bodyContainer}>
+          <View style={styles.messagesStack}>
+            <View style={[styles.messageBubble, styles.assistantBubble]}>
+              <Text style={styles.messageAuthor}>Assistant</Text>
+              <Text style={styles.messageText}>You are at 58% of your monthly budget. Consider reducing food spend this week.</Text>
+            </View>
 
-        <View style={styles.chatCard}>
-          <View style={[styles.messageBubble, styles.assistantBubble]}>
-            <Text style={styles.messageAuthor}>Assistant</Text>
-            <Text style={styles.messageText}>You are at 58% of your monthly budget. Consider reducing food spend this week.</Text>
+            <View style={[styles.messageBubble, styles.userBubble]}>
+              <Text style={[styles.messageAuthor, styles.userAuthor]}>You</Text>
+              <Text style={[styles.messageText, styles.userText]}>How can I save an extra 5,000 this month?</Text>
+            </View>
+
+            <View style={[styles.messageBubble, styles.assistantBubble]}>
+              <Text style={styles.messageAuthor}>Assistant</Text>
+              <Text style={styles.messageText}>Start by reducing ride costs 15% and shopping 12%. That should free around PKR 5,400 this month.</Text>
+            </View>
           </View>
 
-          <View style={[styles.messageBubble, styles.userBubble]}>
-            <Text style={[styles.messageAuthor, styles.userAuthor]}>You</Text>
-            <Text style={[styles.messageText, styles.userText]}>How can I save an extra 5,000 this month?</Text>
+          <View style={styles.quickPromptSection}>
+            <Text style={styles.quickPromptTitle}>Quick prompts</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPromptWrap}>
+              {quickPrompts.map((item) => (
+                <Pressable key={item} style={styles.quickPromptChip} onPress={() => setPrompt(item)}>
+                  <Text style={styles.quickPromptText}>{item}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
 
-          <View style={[styles.messageBubble, styles.assistantBubble]}>
-            <Text style={styles.messageAuthor}>Assistant</Text>
-            <Text style={styles.messageText}>Start by reducing ride costs 15% and shopping 12%. That should free around PKR 5,400 this month.</Text>
+          <View style={styles.composerCard}>
+            <TextInput
+              style={styles.composerInput}
+              placeholder="Type a budgeting or savings question"
+              placeholderTextColor="#9CA3AF"
+              value={prompt}
+              onChangeText={setPrompt}
+              multiline
+            />
+            <PrimaryButton label="Send Message" onPress={() => setPrompt("")} />
           </View>
-        </View>
-
-        <Text style={styles.quickPromptTitle}>Quick prompts</Text>
-        <View style={styles.quickPromptWrap}>
-          {quickPrompts.map((item) => (
-            <Pressable key={item} style={styles.quickPromptChip} onPress={() => setPrompt(item)}>
-              <Text style={styles.quickPromptText}>{item}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.composerCard}>
-          <Text style={styles.composerLabel}>Ask Pocket Plan AI</Text>
-          <TextInput
-            style={styles.composerInput}
-            placeholder="Type a budgeting or savings question"
-            placeholderTextColor="#9CA3AF"
-            value={prompt}
-            onChangeText={setPrompt}
-            multiline
-          />
-          <PrimaryButton label="Send Message" onPress={() => setPrompt("")} />
         </View>
       </ScrollView>
     </ScreenContainer>
@@ -90,96 +97,88 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4FF"
   },
   content: {
-    padding: 16,
-    paddingBottom: 28
+    paddingHorizontal: 0,
+    paddingTop: 0
   },
   hero: {
-    borderRadius: 28,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 14,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    paddingHorizontal: 18,
+    paddingBottom: 16,
     marginBottom: 12,
     overflow: "hidden"
   },
+  bodyContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 6
+  },
   heroCircleA: {
     position: "absolute",
-    width: 136,
-    height: 136,
+    width: 170,
+    height: 170,
     borderRadius: 999,
-    top: -22,
-    right: -34,
-    backgroundColor: "rgba(255,255,255,0.15)"
+    top: -26,
+    right: -42,
+    backgroundColor: "rgba(255,255,255,0.13)"
   },
   heroCircleB: {
     position: "absolute",
-    width: 220,
-    height: 66,
-    left: -60,
-    bottom: -32,
-    transform: [{ rotate: "-12deg" }],
-    backgroundColor: "rgba(255,255,255,0.11)"
+    width: 130,
+    height: 130,
+    left: -42,
+    bottom: -48,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.1)"
   },
-  heroKicker: {
-    color: "rgba(229,232,255,0.9)",
-    fontSize: 12,
-    fontWeight: "700"
-  },
-  heroTitle: {
-    color: "#FFFFFF",
-    marginTop: 6,
-    fontSize: 27,
-    fontWeight: "900"
-  },
-  heroSubtitle: {
-    color: "rgba(237,240,255,0.92)",
-    fontSize: 13.5,
-    marginTop: 8
-  },
-  heroTagsRow: {
-    marginTop: 12,
+  heroTopRow: {
     flexDirection: "row",
-    flexWrap: "wrap"
+    alignItems: "center",
+    justifyContent: "space-between"
   },
-  heroTag: {
+  heroStatusPill: {
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.3)",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    borderColor: "rgba(255,255,255,0.36)",
+    backgroundColor: "rgba(255,255,255,0.14)",
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    marginRight: 8,
-    marginBottom: 8
+    flexDirection: "row",
+    alignItems: "center"
   },
-  heroTagText: {
+  heroStatusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: "#34D399"
+  },
+  heroStatusText: {
+    marginLeft: 6,
     color: "#E4E7FF",
-    fontWeight: "800",
-    fontSize: 11.5
+    fontSize: 11,
+    fontFamily: "Sora_700Bold"
   },
-  insightCard: {
-    backgroundColor: "#F8FAFF",
-    borderWidth: 1,
-    borderColor: "#D7DEEF",
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 10
-  },
-  insightTitle: {
-    color: "#3730A3",
+  heroKicker: {
+    color: "rgba(229,232,255,0.9)",
     fontSize: 13,
-    fontWeight: "900"
+    fontFamily: "Sora_700Bold"
   },
-  insightText: {
-    color: "#334155",
+  heroTitle: {
+    color: "#FFFFFF",
     marginTop: 4,
-    lineHeight: 19,
-    fontSize: 13
+    fontSize: 31,
+    fontFamily: "Sora_800ExtraBold"
   },
-  chatCard: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
-    padding: 12,
+  heroSubtitle: {
+    color: "rgba(237,240,255,0.92)",
+    fontSize: 13,
+    marginTop: 10,
+    lineHeight: 20,
+    fontFamily: "Sora_500Medium"
+  },
+  messagesStack: {
+    paddingVertical: 2,
     marginBottom: 12
   },
   messageBubble: {
@@ -201,7 +200,7 @@ const styles = StyleSheet.create({
   messageAuthor: {
     color: "#4338CA",
     fontSize: 12,
-    fontWeight: "800",
+    fontFamily: "Sora_700Bold",
     marginBottom: 4
   },
   userAuthor: {
@@ -209,61 +208,59 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: "#0F172A",
-    lineHeight: 20
+    lineHeight: 20,
+    fontSize: 13,
+    fontFamily: "Sora_500Medium"
   },
   userText: {
     color: "#111827"
   },
+  quickPromptSection: {
+    marginBottom: 12
+  },
   quickPromptTitle: {
-    marginTop: 2,
+    marginTop: 0,
     marginBottom: 8,
     color: "#111827",
-    fontWeight: "800",
-    fontSize: 16
+    fontSize: 14,
+    fontFamily: "Sora_700Bold"
   },
   quickPromptWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 12
+    paddingRight: 6
   },
   quickPromptChip: {
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D7DDFF",
+    borderColor: "#C7D2FE",
     paddingVertical: 8,
     paddingHorizontal: 12,
-    marginRight: 8,
-    marginBottom: 8
+    marginRight: 8
   },
   quickPromptText: {
     color: "#2E2FA8",
     fontSize: 12,
-    fontWeight: "800"
+    fontFamily: "Sora_700Bold"
   },
   composerCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    backgroundColor: "#FCFCFF",
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: "#DDE3F4",
     padding: 12
-  },
-  composerLabel: {
-    color: "#111827",
-    fontWeight: "800",
-    fontSize: 13,
-    marginBottom: 8
   },
   composerInput: {
     minHeight: 72,
     maxHeight: 130,
     borderWidth: 1,
     borderColor: "#CBD5E1",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 10,
     textAlignVertical: "top",
-    color: "#111827"
+    color: "#111827",
+    fontFamily: "Sora_500Medium"
   }
 });
