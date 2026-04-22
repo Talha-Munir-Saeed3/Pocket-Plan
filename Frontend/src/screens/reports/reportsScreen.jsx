@@ -197,7 +197,6 @@ export default function ReportsScreen() {
               <Text style={styles.labelText}>{period === "Week" ? "7 days" : period === "Month" ? "4 week averages" : "3 month averages"}</Text>
             </View>
             <Text style={styles.trendHint}>{trendDescriptor}</Text>
-            <Text style={styles.trendTapHint}>Tap a bar to view exact percentage.</Text>
             <View style={styles.barsRow}>
               {trendBars.map((bar, idx) => {
                 const barKey = `${period}-${bar.label}-${idx}`;
