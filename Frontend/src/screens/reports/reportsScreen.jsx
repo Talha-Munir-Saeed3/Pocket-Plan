@@ -8,6 +8,8 @@ import { Ionicons } from "@expo/vector-icons";
 import ScreenContainer from "../../components/common/screenContainer";
 
 const CATEGORY_COLORS = {
+  Rent: "#4F46E5",
+  Groceries: "#22C55E",
   Food: "#5C5CDB",
   Transport: "#0EA5E9",
   Shopping: "#F97316",
@@ -15,10 +17,30 @@ const CATEGORY_COLORS = {
   Health: "#EF4444",
   Education: "#8B5CF6",
   Entertainment: "#EC4899",
-  Utilities: "#14B8A6"
+  Utilities: "#14B8A6",
+  Subscriptions: "#6366F1",
+  "Personal Care": "#F472B6",
+  Travel: "#06B6D4",
+  Charity: "#84CC16",
+  Repairs: "#78716C",
+  Insurance: "#2563EB",
+  Taxes: "#B91C1C",
+  Gifts: "#D946EF",
+  Events: "#F59E0B",
+  Sports: "#16A34A",
+  Equipment: "#0D9488",
+  Income: "#15803D",
+  Other: "#6B7280"
 };
 
 const getCategoryColor = (label) => CATEGORY_COLORS[label] ?? "#64748B";
+
+const CHART_OPTION_META = {
+  "Category Bars": { icon: "bar-chart", label: "Category Bars" },
+  "Pie Breakdown": { icon: "pie-chart", label: "Pie Breakdown" },
+  "Line Trend": { icon: "analytics", label: "Line Trend" },
+  Insights: { icon: "sparkles", label: "Insights" }
+};
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
@@ -192,7 +214,10 @@ export default function ReportsScreen() {
               <Text style={styles.sectionTitle}>Breakdown</Text>
               <View style={styles.dropdownWrap}>
                 <Pressable style={styles.dropdownTrigger} onPress={() => setChartMenuOpen((prev) => !prev)}>
-                  <Text style={styles.dropdownTriggerText}>{chartType}</Text>
+                  <View style={styles.dropdownTriggerLeft}>
+                    <Ionicons name={CHART_OPTION_META[chartType].icon} size={13} color="#4C46C8" />
+                    <Text style={styles.dropdownTriggerText}>{CHART_OPTION_META[chartType].label}</Text>
+                  </View>
                   <Ionicons name={chartMenuOpen ? "chevron-up" : "chevron-down"} size={14} color="#4C46C8" />
                 </Pressable>
                 {chartMenuOpen ? (
@@ -208,7 +233,14 @@ export default function ReportsScreen() {
                             setChartMenuOpen(false);
                           }}
                         >
-                          <Text style={[styles.dropdownItemText, selected && styles.dropdownItemTextSelected]}>{option}</Text>
+                          <View style={styles.dropdownItemRow}>
+                            <Ionicons
+                              name={CHART_OPTION_META[option].icon}
+                              size={13}
+                              color={selected ? "#3730A3" : "#64748B"}
+                            />
+                            <Text style={[styles.dropdownItemText, selected && styles.dropdownItemTextSelected]}>{CHART_OPTION_META[option].label}</Text>
+                          </View>
                         </Pressable>
                       );
                     })}
@@ -266,16 +298,36 @@ export default function ReportsScreen() {
             ) : (
               <View style={styles.insightStack}>
                 <View style={styles.insightCard}>
-                  <Text style={styles.insightTitle}>Top Insight</Text>
+                  <View style={styles.insightTitleRow}>
+                    <View style={[styles.insightIconBubble, styles.insightIconBubblePurple]}>
+                      <Ionicons name="sparkles" size={13} color="#5B21B6" />
+                    </View>
+                    <Text style={styles.insightTitle}>Top Insight</Text>
+                  </View>
                   <Text style={styles.insightText}>
                     Transport and food together make up more than half of your spend. A 10% cut in both could free around PKR 2,400 monthly.
                   </Text>
+                  <View style={styles.insightPillRow}>
+                    <View style={styles.insightPill}>
+                      <Text style={styles.insightPillText}>Potential Save: PKR 2,400</Text>
+                    </View>
+                  </View>
                 </View>
                 <View style={styles.insightCard}>
-                  <Text style={styles.insightTitle}>Action Suggestion</Text>
+                  <View style={styles.insightTitleRow}>
+                    <View style={[styles.insightIconBubble, styles.insightIconBubbleBlue]}>
+                      <Ionicons name="flash" size={13} color="#1D4ED8" />
+                    </View>
+                    <Text style={styles.insightTitle}>Action Suggestion</Text>
+                  </View>
                   <Text style={styles.insightText}>
                     Shift two non-essential purchases from this week to next month to reduce current cycle pressure.
                   </Text>
+                  <View style={styles.insightPillRow}>
+                    <View style={styles.insightPill}>
+                      <Text style={styles.insightPillText}>Impact: Lower current-month pressure</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             )}
@@ -536,7 +588,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between"
   },
+  dropdownTriggerLeft: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
   dropdownTriggerText: {
+    marginLeft: 6,
     color: "#3730A3",
     fontSize: 12,
     fontFamily: "Sora_700Bold"
@@ -559,10 +616,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#EEF2FF"
   },
+  dropdownItemRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
   dropdownItemSelected: {
     backgroundColor: "#EEF2FF"
   },
   dropdownItemText: {
+    marginLeft: 6,
     color: "#334155",
     fontSize: 12,
     fontFamily: "Sora_600SemiBold"
@@ -674,5 +736,63 @@ const styles = StyleSheet.create({
     color: "#64748B",
     fontSize: 12,
     fontFamily: "Sora_500Medium"
+  },
+  insightStack: {
+    marginTop: 2
+  },
+  insightCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#D7DEEF",
+    backgroundColor: "#F8FAFF",
+    padding: 14,
+    marginBottom: 10
+  },
+  insightTitleRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  insightIconBubble: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8
+  },
+  insightIconBubblePurple: {
+    backgroundColor: "#EDE9FE"
+  },
+  insightIconBubbleBlue: {
+    backgroundColor: "#DBEAFE"
+  },
+  insightTitle: {
+    color: "#3730A3",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold"
+  },
+  insightText: {
+    color: "#334155",
+    marginTop: 6,
+    lineHeight: 20,
+    fontSize: 13,
+    fontFamily: "Sora_500Medium"
+  },
+  insightPillRow: {
+    marginTop: 10,
+    flexDirection: "row"
+  },
+  insightPill: {
+    borderWidth: 1,
+    borderColor: "#C7D2FE",
+    backgroundColor: "#EEF2FF",
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10
+  },
+  insightPillText: {
+    color: "#3730A3",
+    fontSize: 11,
+    fontFamily: "Sora_700Bold"
   }
 });
