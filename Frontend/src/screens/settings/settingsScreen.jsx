@@ -1,281 +1,851 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  useFonts,
+  Sora_500Medium,
+  Sora_600SemiBold,
+  Sora_700Bold,
+  Sora_800ExtraBold,
+} from "@expo-google-fonts/sora";
+import { Ionicons } from "@expo/vector-icons";
 
-import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
+
+// ─── Mock user state ──────────────────────────────────────────────────────────
+// Replace with real auth context / API data when backend is connected
+const MOCK_USER = {
+  name: "Talha P",
+  initials: "TP",
+  email: "talha@email.com",
+  isPremium: true,
+  currency: "PKR",
+  theme: "Default Purple",
+};
+
+// ─── Theme options ────────────────────────────────────────────────────────────
+const THEMES = [
+  { id: "default", label: "Default Purple", available: true },
+  { id: "midnight", label: "Midnight Blue", available: false },
+  { id: "forest", label: "Forest Green", available: false },
+  { id: "rose", label: "Rose Gold", available: false },
+];
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [balanceHidden, setBalanceHidden] = useState(false);
-  const [smartTipsEnabled, setSmartTipsEnabled] = useState(true);
+  const [themeSheetVisible, setThemeSheetVisible] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState("default");
 
-  const settingsGroups = [
-    {
-      title: "Account",
-      items: ["Edit Profile", "Change Password", "Currency Selection"]
-    },
-    {
-      title: "Security",
-      items: ["App Lock", "Biometric Login", "Privacy Policy"]
-    }
-  ];
+  const [fontsLoaded] = useFonts({
+    Sora_500Medium,
+    Sora_600SemiBold,
+    Sora_700Bold,
+    Sora_800ExtraBold,
+  });
+
+  if (!fontsLoaded) return null;
+
+  const user = MOCK_USER;
+
+  // ─── Sign out handler ────────────────────────────────────────────────────
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () => {
+            // TODO: clear auth tokens and navigate to sign-in
+            router.replace("/(auth)/sign-in");
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  // ─── Theme picker ────────────────────────────────────────────────────────
+  const currentThemeLabel =
+    THEMES.find((t) => t.id === selectedTheme)?.label ?? "Default Purple";
+
+  // ─── Reusable row component ───────────────────────────────────────────────
+  const SettingsRow = ({
+    icon,
+    title,
+    subtitle,
+    rightText,
+    onPress,
+    isLast = false,
+    danger = false,
+    iconBg = "#EEEEFF",
+    iconColor = "#5C5CDB",
+  }) => (
+    <Pressable
+      style={({ pressed }) => [
+        styles.row,
+        !isLast && styles.rowBorder,
+        pressed && styles.rowPressed,
+      ]}
+      onPress={onPress}
+      android_ripple={{ color: "#F0F0FF" }}
+    >
+      <View style={[styles.rowIconBubble, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
+      <View style={styles.rowContent}>
+        <Text style={[styles.rowTitle, danger && styles.rowTitleDanger]}>
+          {title}
+        </Text>
+        {subtitle ? (
+          <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        ) : null}
+      </View>
+      {rightText ? (
+        <Text style={styles.rowRightText}>{rightText}</Text>
+      ) : null}
+      <Ionicons
+        name="chevron-forward"
+        size={16}
+        color={danger ? "#DC2626" : "#94A3B8"}
+        style={styles.rowChevron}
+      />
+    </Pressable>
+  );
+
+  // ─── Section wrapper ─────────────────────────────────────────────────────
+  const Section = ({ title, children }) => (
+    <View style={styles.sectionPanel}>
+      <Text style={styles.sectionHeader}>{title}</Text>
+      {children}
+    </View>
+  );
+
+  // ─── Toggle row ──────────────────────────────────────────────────────────
+  const ToggleRow = ({ icon, title, subtitle, value, onChange, isLast = false }) => (
+    <View style={[styles.row, !isLast && styles.rowBorder]}>
+      <View style={styles.rowIconBubble}>
+        <Ionicons name={icon} size={18} color="#5C5CDB" />
+      </View>
+      <View style={styles.rowContent}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.rowSubtitle}>{subtitle}</Text> : null}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: "#E2E8F0", true: "#5C5CDB" }}
+        thumbColor="#FFFFFF"
+        ios_backgroundColor="#E2E8F0"
+      />
+    </View>
+  );
 
   return (
-    <ScreenContainer style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#16193B", "#5C5CDB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── HERO ──────────────────────────────────────────────────────── */}
+        <LinearGradient
+          colors={["#16193B", "#5C5CDB"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.hero, { paddingTop: insets.top + 12 }]}
+        >
+          {/* Glow blobs */}
           <View style={styles.heroGlowA} />
           <View style={styles.heroGlowB} />
-          <Text style={styles.heroKicker}>Preferences</Text>
-          <Text style={styles.heroTitle}>Settings</Text>
-          <Text style={styles.heroSubtitle}>Manage your profile, app behavior, and privacy preferences.</Text>
 
-          <View style={styles.profilePill}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>TP</Text>
-            </View>
+          {/* Top row — title + avatar */}
+          <View style={styles.heroTopRow}>
             <View>
-              <Text style={styles.profileName}>Talha P</Text>
-              <Text style={styles.profileMeta}>Premium plan active</Text>
+              <Text style={styles.heroKicker}>Preferences</Text>
+              <Text style={styles.heroTitle}>Settings</Text>
             </View>
+            {/* Avatar taps to Edit Profile */}
+            <Pressable
+              style={styles.heroAvatar}
+              onPress={() => router.push("/edit-profile")}
+            >
+              <Text style={styles.heroAvatarText}>{user.initials}</Text>
+            </Pressable>
+          </View>
+
+          {/* Profile pill */}
+          <View style={styles.profilePill}>
+            <View style={styles.pillAvatar}>
+              <Text style={styles.pillAvatarText}>{user.initials}</Text>
+            </View>
+            <View style={styles.pillInfo}>
+              <Text style={styles.pillName}>{user.name}</Text>
+              <Text style={styles.pillEmail}>{user.email}</Text>
+            </View>
+            {/* Plan badge */}
+            {user.isPremium ? (
+              <View style={styles.badgePremium}>
+                <Text style={styles.badgePremiumText}>Premium ✓</Text>
+              </View>
+            ) : (
+              <View style={styles.badgeFree}>
+                <Text style={styles.badgeFreeText}>Free Plan</Text>
+              </View>
+            )}
           </View>
         </LinearGradient>
 
-        <View style={styles.switchCard}>
-          <Text style={styles.groupHeader}>App Preferences</Text>
-          <View style={styles.switchRow}>
-            <View>
-              <Text style={styles.switchTitle}>Notifications</Text>
-              <Text style={styles.switchMeta}>Budget alerts, reminders and summaries</Text>
-            </View>
-            <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: "#D1D5DB", true: "#A5B4FC" }} thumbColor={notificationsEnabled ? "#4F46E5" : "#9CA3AF"} />
-          </View>
+        <View style={styles.body}>
 
-          <View style={[styles.switchRow, styles.switchRowLast]}>
-            <View>
-              <Text style={styles.switchTitle}>Hide Balance</Text>
-              <Text style={styles.switchMeta}>Mask amounts on dashboard cards</Text>
-            </View>
-            <Switch value={balanceHidden} onValueChange={setBalanceHidden} trackColor={{ false: "#D1D5DB", true: "#A5B4FC" }} thumbColor={balanceHidden ? "#4F46E5" : "#9CA3AF"} />
-          </View>
+          {/* ── APP PREFERENCES ─────────────────────────────────────────── */}
+          <Section title="App Preferences">
+            <ToggleRow
+              icon="notifications-outline"
+              title="Notifications"
+              subtitle="Budget alerts, reminders and summaries"
+              value={notificationsEnabled}
+              onChange={setNotificationsEnabled}
+            />
+            <ToggleRow
+              icon="eye-off-outline"
+              title="Hide Balance"
+              subtitle="Mask amounts on dashboard cards"
+              value={balanceHidden}
+              onChange={setBalanceHidden}
+              isLast
+            />
+          </Section>
 
-          <View style={[styles.switchRow, styles.switchRowLast]}>
-            <View>
-              <Text style={styles.switchTitle}>Smart AI Tips</Text>
-              <Text style={styles.switchMeta}>Show weekly coaching insights on dashboard</Text>
+          {/* ── ACCOUNT ─────────────────────────────────────────────────── */}
+          <Section title="Account">
+            <SettingsRow
+              icon="person-outline"
+              title="Edit Profile"
+              subtitle="Update your name and email"
+              onPress={() => router.push("/edit-profile")}
+            />
+            <SettingsRow
+              icon="image-outline"
+              title="Update Avatar"
+              subtitle="Choose from preset avatars"
+              onPress={() => router.push("/update-avatar")}
+            />
+            <SettingsRow
+              icon="lock-closed-outline"
+              title="Change Password"
+              subtitle="Update your account password"
+              onPress={() => router.push("/change-password")}
+            />
+            <SettingsRow
+              icon="cash-outline"
+              title="Currency"
+              subtitle="Select your primary currency"
+              rightText={user.currency}
+              onPress={() => router.push("/currency-selection")}
+            />
+            <SettingsRow
+              icon="color-palette-outline"
+              title="Change Theme"
+              subtitle="Personalise your app appearance"
+              rightText={currentThemeLabel}
+              onPress={() => setThemeSheetVisible(true)}
+              isLast
+            />
+          </Section>
+
+          {/* ── SECURITY ─────────────────────────────────────────────────── */}
+          <Section title="Security">
+            <SettingsRow
+              icon="shield-outline"
+              title="App Lock"
+              subtitle="Biometric or PIN protection"
+              onPress={() => router.push("/app-lock")}
+              iconBg="#EEF2FF"
+              iconColor="#4338CA"
+            />
+            <SettingsRow
+              icon="finger-print"
+              title="Biometric Login"
+              subtitle="Use fingerprint or Face ID"
+              onPress={() => router.push("/biometric")}
+              iconBg="#EEF2FF"
+              iconColor="#4338CA"
+            />
+            <SettingsRow
+              icon="document-text-outline"
+              title="Privacy Policy"
+              subtitle="How we use your data"
+              onPress={() => router.push("/privacy-policy")}
+              iconBg="#EEF2FF"
+              iconColor="#4338CA"
+              isLast
+            />
+          </Section>
+
+          {/* ── SUPPORT ──────────────────────────────────────────────────── */}
+          <Section title="Support">
+            <SettingsRow
+              icon="chatbubble-ellipses-outline"
+              title="Contact Us"
+              subtitle="Get help from our team"
+              onPress={() => router.push("/contact")}
+              iconBg="#F0FDF4"
+              iconColor="#16A34A"
+            />
+            <SettingsRow
+              icon="help-circle-outline"
+              title="Help & FAQ"
+              subtitle="Common questions answered"
+              onPress={() => router.push("/faq")}
+              iconBg="#F0FDF4"
+              iconColor="#16A34A"
+            />
+            <SettingsRow
+              icon="star-outline"
+              title="Rate the App"
+              subtitle="Enjoying Pocket Plan?"
+              onPress={() => {
+                // TODO: open app store rating
+                Alert.alert("Thank you!", "Redirecting to the app store...");
+              }}
+              iconBg="#F0FDF4"
+              iconColor="#16A34A"
+              isLast
+            />
+          </Section>
+
+          {/* ── PREMIUM CARD (free users only) ───────────────────────────── */}
+          {!user.isPremium ? (
+            <LinearGradient
+              colors={["#312E81", "#5C5CDB"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.premiumCard}
+            >
+              <View style={styles.premiumGlow} />
+              <Text style={styles.premiumTitle}>Unlock Premium</Text>
+              <Text style={styles.premiumSub}>
+                Advanced exports, more AI credits, and multiple budget profiles.
+              </Text>
+              <Pressable
+                style={styles.premiumBtn}
+                onPress={() => router.push("/premium")}
+              >
+                <Text style={styles.premiumBtnText}>Go Premium →</Text>
+              </Pressable>
+            </LinearGradient>
+          ) : (
+            // Premium active indicator
+            <View style={styles.premiumActivePill}>
+              <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+              <Text style={styles.premiumActiveText}>
+                Premium Plan Active — all features unlocked
+              </Text>
             </View>
-            <Switch value={smartTipsEnabled} onValueChange={setSmartTipsEnabled} trackColor={{ false: "#D1D5DB", true: "#A5B4FC" }} thumbColor={smartTipsEnabled ? "#4F46E5" : "#9CA3AF"} />
-          </View>
+          )}
+
+          {/* ── SIGN OUT ─────────────────────────────────────────────────── */}
+          <Pressable
+            style={({ pressed }) => [
+              styles.signOutBtn,
+              pressed && styles.signOutBtnPressed,
+            ]}
+            onPress={handleSignOut}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={18}
+              color="#DC2626"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
+
+          <Text style={styles.versionText}>Pocket Plan v1.0 · Team CPS</Text>
         </View>
+      </ScrollView>
 
-        {settingsGroups.map((group) => (
-          <View key={group.title} style={styles.groupCard}>
-            <Text style={styles.groupTitle}>{group.title}</Text>
-            {group.items.map((item, idx) => (
-              <Pressable key={item} style={[styles.groupItem, idx === group.items.length - 1 && styles.groupItemLast]}>
-                <View style={styles.groupItemLeft}>
-                  <View style={styles.badge} />
-                  <Text style={styles.groupItemText}>{item}</Text>
-                </View>
-                <Text style={styles.chevron}>{"->"}</Text>
+      {/* ── THEME PICKER BOTTOM SHEET ─────────────────────────────────────── */}
+      {themeSheetVisible && (
+        <Pressable
+          style={styles.sheetOverlay}
+          onPress={() => setThemeSheetVisible(false)}
+        >
+          <Pressable style={styles.sheetContainer} onPress={() => {}}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Choose Theme</Text>
+            <Text style={styles.sheetSub}>
+              More themes coming soon — only Default is available now.
+            </Text>
+            {THEMES.map((theme) => (
+              <Pressable
+                key={theme.id}
+                style={[
+                  styles.themeRow,
+                  selectedTheme === theme.id && styles.themeRowActive,
+                  !theme.available && styles.themeRowDisabled,
+                ]}
+                onPress={() => {
+                  if (!theme.available) return;
+                  setSelectedTheme(theme.id);
+                  setThemeSheetVisible(false);
+                }}
+                disabled={!theme.available}
+              >
+                <View
+                  style={[
+                    styles.themeColorDot,
+                    {
+                      backgroundColor: theme.available
+                        ? "#5C5CDB"
+                        : "#CBD5E1",
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.themeLabel,
+                    !theme.available && styles.themeLabelDisabled,
+                  ]}
+                >
+                  {theme.label}
+                </Text>
+                {!theme.available && (
+                  <View style={styles.comingSoonPill}>
+                    <Text style={styles.comingSoonText}>Coming Soon</Text>
+                  </View>
+                )}
+                {selectedTheme === theme.id && theme.available && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={18}
+                    color="#5C5CDB"
+                    style={{ marginLeft: "auto" }}
+                  />
+                )}
               </Pressable>
             ))}
-          </View>
-        ))}
-
-        <LinearGradient colors={["#312E81", "#5C5CDB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.premiumCard}>
-          <Text style={styles.premiumTitle}>Unlock Premium</Text>
-          <Text style={styles.premiumMeta}>Advanced exports, more AI credits, and multiple budget profiles.</Text>
-          <PrimaryButton label="Go Premium" onPress={() => router.push("/premium")} />
-        </LinearGradient>
-      </ScrollView>
+            <Pressable
+              style={styles.sheetCloseBtn}
+              onPress={() => setThemeSheetVisible(false)}
+            >
+              <Text style={styles.sheetCloseBtnText}>Close</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      )}
     </ScreenContainer>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: {
-    backgroundColor: "#F4F4FF"
+    backgroundColor: "#F4F4FF",
   },
   content: {
-    padding: 16,
-    paddingBottom: 28
+    paddingBottom: 40,
   },
+
+  // ── Hero ────────────────────────────────────────────────────────────────
   hero: {
-    borderRadius: 28,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 14,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    paddingHorizontal: 18,
+    paddingBottom: 20,
     marginBottom: 12,
-    overflow: "hidden"
+    overflow: "hidden",
   },
   heroGlowA: {
     position: "absolute",
-    width: 136,
-    height: 136,
+    width: 160,
+    height: 160,
     borderRadius: 999,
-    right: -34,
-    top: -24,
-    backgroundColor: "rgba(255,255,255,0.16)"
+    right: -40,
+    top: -30,
+    backgroundColor: "rgba(255,255,255,0.13)",
   },
   heroGlowB: {
     position: "absolute",
-    width: 220,
-    height: 66,
-    left: -60,
-    bottom: -32,
-    transform: [{ rotate: "-12deg" }],
-    backgroundColor: "rgba(255,255,255,0.12)"
+    width: 120,
+    height: 120,
+    borderRadius: 999,
+    left: -40,
+    bottom: -40,
+    backgroundColor: "rgba(255,255,255,0.10)",
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 14,
   },
   heroKicker: {
-    color: "rgba(229,232,255,0.9)",
-    fontSize: 12,
-    fontWeight: "700"
+    color: "rgba(220,226,255,0.85)",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold",
   },
   heroTitle: {
     color: "#FFFFFF",
-    marginTop: 6,
-    fontSize: 27,
-    fontWeight: "900"
+    fontSize: 34,
+    fontFamily: "Sora_800ExtraBold",
+    marginTop: 4,
   },
-  heroSubtitle: {
-    marginTop: 8,
-    color: "rgba(237,240,255,0.92)",
-    fontSize: 13.5
-  },
-  profilePill: {
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.28)",
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 14,
-    padding: 10,
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  avatarCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.26)",
+  heroAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.4)",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10
+    marginTop: 4,
   },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "800"
-  },
-  profileName: {
+  heroAvatarText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "800"
+    fontFamily: "Sora_700Bold",
   },
-  profileMeta: {
-    color: "#DCE2FF",
+
+  // Profile pill inside hero
+  profilePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+    borderRadius: 16,
+    padding: 12,
+  },
+  pillAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.24)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  pillAvatarText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "Sora_700Bold",
+  },
+  pillInfo: {
+    flex: 1,
+  },
+  pillName: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold",
+  },
+  pillEmail: {
+    color: "rgba(220,226,255,0.8)",
+    fontSize: 11,
+    fontFamily: "Sora_500Medium",
     marginTop: 2,
-    fontSize: 12,
-    fontWeight: "700"
   },
-  switchCard: {
-    backgroundColor: "#FFFFFF",
+  badgePremium: {
+    backgroundColor: "#F59E0B",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  badgePremiumText: {
+    color: "#1A1A00",
+    fontSize: 11,
+    fontFamily: "Sora_700Bold",
+  },
+  badgeFree: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  badgeFreeText: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 11,
+    fontFamily: "Sora_600SemiBold",
+  },
+
+  // ── Body ────────────────────────────────────────────────────────────────
+  body: {
     paddingHorizontal: 12,
-    marginBottom: 12
   },
-  groupHeader: {
-    marginTop: 12,
-    color: "#4338CA",
-    fontSize: 13,
-    fontWeight: "900",
-    textTransform: "uppercase"
-  },
-  switchRow: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between"
-  },
-  switchRowLast: {
-    borderBottomWidth: 0
-  },
-  switchTitle: {
-    color: "#0F172A",
-    fontWeight: "800",
-    fontSize: 14
-  },
-  switchMeta: {
-    color: "#64748B",
-    fontSize: 12,
-    marginTop: 3
-  },
-  groupCard: {
-    backgroundColor: "#FFFFFF",
+
+  // ── Section panel (matches reports screen exactly) ───────────────────────
+  sectionPanel: {
+    backgroundColor: "#FCFCFF",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
+    borderColor: "#DDE3F4",
+    borderRadius: 18,
     paddingHorizontal: 12,
-    marginBottom: 12
+    paddingBottom: 4,
+    marginBottom: 14,
   },
-  groupTitle: {
-    marginTop: 12,
+  sectionHeader: {
+    marginTop: 14,
     marginBottom: 8,
-    color: "#4338CA",
+    color: "#5C5CDB",
     fontSize: 13,
-    fontWeight: "900",
-    textTransform: "uppercase"
+    fontFamily: "Sora_700Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  groupItem: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+
+  // ── Row ──────────────────────────────────────────────────────────────────
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    paddingVertical: 13,
   },
-  groupItemLeft: {
-    flexDirection: "row",
-    alignItems: "center"
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
   },
-  badge: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: "#5C5CDB",
-    marginRight: 8
+  rowPressed: {
+    backgroundColor: "#F8F8FF",
+    borderRadius: 10,
   },
-  groupItemLast: {
-    borderBottomWidth: 0
+  rowIconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#EEEEFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+    flexShrink: 0,
   },
-  groupItemText: {
+  rowContent: {
+    flex: 1,
+  },
+  rowTitle: {
     color: "#0F172A",
-    fontWeight: "700"
+    fontSize: 14,
+    fontFamily: "Sora_700Bold",
   },
-  chevron: {
+  rowTitleDanger: {
+    color: "#DC2626",
+  },
+  rowSubtitle: {
     color: "#64748B",
-    fontWeight: "800"
+    fontSize: 12,
+    fontFamily: "Sora_500Medium",
+    marginTop: 2,
   },
+  rowRightText: {
+    color: "#64748B",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold",
+    marginRight: 4,
+  },
+  rowChevron: {
+    flexShrink: 0,
+  },
+
+  // ── Premium card ─────────────────────────────────────────────────────────
   premiumCard: {
-    borderRadius: 16,
-    padding: 14,
-    overflow: "hidden"
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    overflow: "hidden",
+  },
+  premiumGlow: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 999,
+    right: -30,
+    top: -30,
+    backgroundColor: "rgba(255,255,255,0.10)",
   },
   premiumTitle: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: "900"
+    fontFamily: "Sora_800ExtraBold",
+    marginBottom: 6,
   },
-  premiumMeta: {
+  premiumSub: {
     color: "#DCE2FF",
-    marginTop: 4,
-    marginBottom: 10
-  }
+    fontSize: 13,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 14,
+    lineHeight: 20,
+  },
+  premiumBtn: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  premiumBtnText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold",
+  },
+
+  // Premium active pill
+  premiumActivePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
+    gap: 8,
+  },
+  premiumActiveText: {
+    color: "#15803D",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold",
+    flex: 1,
+  },
+
+  // ── Sign out ─────────────────────────────────────────────────────────────
+  signOutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#FECACA",
+    borderRadius: 14,
+    height: 50,
+    marginBottom: 16,
+  },
+  signOutBtnPressed: {
+    backgroundColor: "#FEF2F2",
+  },
+  signOutText: {
+    color: "#DC2626",
+    fontSize: 15,
+    fontFamily: "Sora_700Bold",
+  },
+
+  // ── Version text ──────────────────────────────────────────────────────────
+  versionText: {
+    textAlign: "center",
+    color: "#94A3B8",
+    fontSize: 12,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 8,
+  },
+
+  // ── Theme sheet ──────────────────────────────────────────────────────────
+  sheetOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  sheetContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 36,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "#E2E8F0",
+    alignSelf: "center",
+    marginBottom: 18,
+  },
+  sheetTitle: {
+    color: "#0F172A",
+    fontSize: 17,
+    fontFamily: "Sora_800ExtraBold",
+    marginBottom: 4,
+  },
+  sheetSub: {
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 16,
+  },
+  themeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    borderRadius: 8,
+    paddingHorizontal: 4,
+  },
+  themeRowActive: {
+    backgroundColor: "#F5F3FF",
+  },
+  themeRowDisabled: {
+    opacity: 0.5,
+  },
+  themeColorDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    marginRight: 12,
+  },
+  themeLabel: {
+    color: "#0F172A",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold",
+    flex: 1,
+  },
+  themeLabelDisabled: {
+    color: "#94A3B8",
+  },
+  comingSoonPill: {
+    backgroundColor: "#F1F5F9",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: "auto",
+  },
+  comingSoonText: {
+    color: "#64748B",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold",
+  },
+  sheetCloseBtn: {
+    marginTop: 16,
+    backgroundColor: "#F4F4FF",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+  },
+  sheetCloseBtnText: {
+    color: "#5C5CDB",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold",
+  },
 });
