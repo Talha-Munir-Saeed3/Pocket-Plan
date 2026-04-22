@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
@@ -43,6 +44,7 @@ const CHART_OPTION_META = {
 };
 
 export default function ReportsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [period, setPeriod] = useState("Month");
   const [chartType, setChartType] = useState("Category Bars");
@@ -126,8 +128,15 @@ export default function ReportsScreen() {
         >
           <View style={styles.heroGlowA} />
           <View style={styles.heroGlowB} />
-          <Text style={styles.heroGreeting}>Analytics Hub</Text>
-          <Text style={styles.heroTitle}>Reports</Text>
+          <View style={styles.heroTopRow}>
+            <View>
+              <Text style={styles.heroGreeting}>Analytics Hub</Text>
+              <Text style={styles.heroTitle}>Reports</Text>
+            </View>
+            <Pressable style={styles.headerHelpButton} onPress={() => router.push("/reports-help") }>
+              <Text style={styles.headerHelpText}>?</Text>
+            </Pressable>
+          </View>
           <Text style={styles.heroSub}>Deep spending patterns, smarter decisions.</Text>
 
           <View style={styles.heroInsightsRow}>
@@ -403,6 +412,26 @@ const styles = StyleSheet.create({
   },
   heroInsightsRow: {
     flexDirection: "row"
+  },
+  heroTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  headerHelpButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#C7CEFF",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  headerHelpText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "Sora_700Bold"
   },
   heroInsightCard: {
     flex: 1,
