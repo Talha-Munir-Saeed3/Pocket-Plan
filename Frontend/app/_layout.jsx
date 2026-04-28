@@ -65,6 +65,15 @@ export default function RootLayout() {
         <Stack.Screen name="savings-goal" />
         <Stack.Screen name="savings-help" />
         <Stack.Screen name="premium" />
+        <Stack.Screen name="edit-profile" />
+        <Stack.Screen name="update-avatar" />
+        <Stack.Screen name="change-password" />
+        <Stack.Screen name="currency-selection" />
+        <Stack.Screen name="app-lock" />
+        <Stack.Screen name="biometric" />
+        <Stack.Screen name="privacy-policy" />
+        <Stack.Screen name="contact" />
+        <Stack.Screen name="faq" />
       </Stack>
     </SafeAreaProvider>
   );

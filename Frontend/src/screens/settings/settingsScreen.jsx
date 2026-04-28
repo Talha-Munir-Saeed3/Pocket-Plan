@@ -165,7 +165,7 @@ export default function SettingsScreen() {
       >
         {/* ── HERO ──────────────────────────────────────────────────────── */}
         <LinearGradient
-          colors={["#16193B", "#5C5CDB"]}
+          colors={["#5C5CDB", "#3F2E95"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + 12 }]}
@@ -208,6 +208,24 @@ export default function SettingsScreen() {
                 <Text style={styles.badgeFreeText}>Free Plan</Text>
               </View>
             )}
+          </View>
+
+          <View style={styles.heroStatsRow}>
+            <View style={styles.heroStatCard}>
+              <Ionicons name="wallet-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.heroStatLabel}>Currency</Text>
+              <Text style={styles.heroStatValue}>{user.currency}</Text>
+            </View>
+            <View style={styles.heroStatCard}>
+              <Ionicons name="color-palette-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.heroStatLabel}>Theme</Text>
+              <Text style={styles.heroStatValue}>{currentThemeLabel}</Text>
+            </View>
+            <View style={styles.heroStatCard}>
+              <Ionicons name={user.isPremium ? "sparkles-outline" : "star-outline"} size={16} color="#FFFFFF" />
+              <Text style={styles.heroStatLabel}>Plan</Text>
+              <Text style={styles.heroStatValue}>{user.isPremium ? "Premium" : "Free"}</Text>
+            </View>
           </View>
         </LinearGradient>
 
@@ -521,6 +539,33 @@ const styles = StyleSheet.create({
   heroAvatarText: {
     color: "#FFFFFF",
     fontSize: 14,
+    fontFamily: "Sora_700Bold",
+  },
+  heroStatsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  heroStatCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    minHeight: 74,
+  },
+  heroStatLabel: {
+    marginTop: 6,
+    color: "rgba(220,226,255,0.82)",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold",
+  },
+  heroStatValue: {
+    marginTop: 3,
+    color: "#FFFFFF",
+    fontSize: 12,
     fontFamily: "Sora_700Bold",
   },
 
