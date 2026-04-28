@@ -47,6 +47,15 @@ Recommended icon usage:
 - Red critical sections: `alert`, `close-circle`, or `trash`
 - Grey secondary sections: `information-circle`, `document-text`, or `ellipsis-horizontal-circle`
 
+When a screen includes a transaction creation guide, keep the step order as:
+
+1. Type
+2. Category or goal
+3. Title
+4. Amount
+5. Date
+6. Optional notes
+
 Implementation notes:
 
 - Place icon and heading text in one row (`headRow`) with vertical alignment.

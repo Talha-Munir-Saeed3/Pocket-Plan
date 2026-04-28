@@ -15,11 +15,13 @@ const TRANSACTIONS = [
   { id: "4", title: "Fuel", category: "Transport", date: "Yesterday", amount: -3200, month: "Apr 2026", isThisWeek: true },
   { id: "5", title: "Daraz Order", category: "Shopping", date: "Apr 12", amount: -4500, month: "Apr 2026", isThisWeek: false },
   { id: "6", title: "Client Retainer", category: "Income", date: "Mar 28", amount: 18000, month: "Mar 2026", isThisWeek: false },
+  { id: "6a", title: "Goal Deposit · Emergency Fund", category: "Savings", date: "Mar 20", amount: 5000, month: "Mar 2026", isThisWeek: false },
   { id: "7", title: "Electric Bill", category: "Bills", date: "Mar 24", amount: -5400, month: "Mar 2026", isThisWeek: false },
   { id: "8", title: "Groceries", category: "Food", date: "Mar 21", amount: -3600, month: "Mar 2026", isThisWeek: false },
   { id: "9", title: "Online Course", category: "Education", date: "Mar 13", amount: -2800, month: "Mar 2026", isThisWeek: false },
   { id: "10", title: "Part-time Income", category: "Income", date: "Feb 22", amount: 12000, month: "Feb 2026", isThisWeek: false },
   { id: "11", title: "Pharmacy", category: "Health", date: "Feb 17", amount: -1200, month: "Feb 2026", isThisWeek: false },
+  { id: "12a", title: "Goal Withdrawal · Emergency Fund", category: "Savings", date: "Feb 05", amount: -8000, month: "Feb 2026", isThisWeek: false },
   { id: "12", title: "Internet", category: "Bills", date: "Feb 11", amount: -2900, month: "Feb 2026", isThisWeek: false }
 ];
 

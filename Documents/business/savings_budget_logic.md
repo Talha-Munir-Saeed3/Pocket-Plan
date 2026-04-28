@@ -20,10 +20,12 @@ They both come from the same income but they are tracked independently.
 ## 1. End of Month — What Happens
 
 **Budget resets to zero on the 1st of every month.**
+
 - April's spent amount is gone, fresh start
 - May needs a new allocation
 
 **Savings does NOT reset.**
+
 - PKR 42,500 saved in April stays as PKR 42,500
 - May's savings adds on top of it
 - It grows like a running total across months
@@ -32,12 +34,13 @@ They both come from the same income but they are tracked independently.
 
 > Not implemented yet — planned as a future settings option
 
-| Setting | Behaviour |
-|---|---|
-| Carry forward OFF (default) | Unspent budget disappears at month end. Next month starts fresh. |
-| Carry forward ON | Unspent budget automatically moves into savings balance at month end. |
+| Setting                     | Behaviour                                                             |
+| --------------------------- | --------------------------------------------------------------------- |
+| Carry forward OFF (default) | Unspent budget disappears at month end. Next month starts fresh.      |
+| Carry forward ON            | Unspent budget automatically moves into savings balance at month end. |
 
 **Example:**
+
 ```
 User spent PKR 60,000 out of PKR 75,000 budget
 Unspent = PKR 15,000
@@ -64,6 +67,7 @@ ETA recalculates:  immediately based on new balance
 ```
 
 ### Rules
+
 - Deduct only the used amount from goal saved balance
 - Recalculate progress and ETA immediately after withdrawal
 - Log the withdrawal as a transaction of type `savings_withdrawal`
@@ -78,18 +82,19 @@ ETA recalculates:  immediately based on new balance
 
 ### Goal Status Values
 
-| Status | Meaning |
-|---|---|
-| `in_progress` | Currently active, ETA running |
-| `achieved` | Hit 100%, marked with achieved date |
-| `cancelled` | User manually deleted / closed it |
-| `archived` | User paused it without deleting |
+| Status        | Meaning                             |
+| ------------- | ----------------------------------- |
+| `in_progress` | Currently active, ETA running       |
+| `achieved`    | Hit 100%, marked with achieved date |
+| `cancelled`   | User manually deleted / closed it   |
+| `archived`    | User paused it without deleting     |
 
 ### Rules
+
 - All statuses are kept in Goals History
 - User can see their full goal journey at any time
 - AI chatbot can reference past goals for personalised advice
-  - e.g. *"You achieved your New Laptop goal in 9 months last year — want to set a new one?"*
+  - e.g. _"You achieved your New Laptop goal in 9 months last year — want to set a new one?"_
 
 ---
 
@@ -106,9 +111,11 @@ Saved balance reaches PKR 150,000 (100%)
 ```
 
 ### Important
+
 The money does not disappear. PKR 150,000 remains in their savings balance.
 Achieving the goal just means the **tracking is done**.
 What the user does with the money is their choice:
+
 - Buy the item
 - Start a new goal
 - Leave it in savings
@@ -145,13 +152,13 @@ ETA = 107,500 ÷ 12,000 = 8.96 → rounds up to 9 months
 
 ### Edge Cases
 
-| Situation | ETA Behaviour |
-|---|---|
-| Monthly saving = 0 | ETA shows as "—" or "Set a monthly target" |
-| Goal already achieved | ETA stops, shows achieved date instead |
-| Goal cancelled | ETA stops |
-| Saving rate increased | ETA drops immediately |
-| Saving rate decreased | ETA increases immediately |
+| Situation             | ETA Behaviour                              |
+| --------------------- | ------------------------------------------ |
+| Monthly saving = 0    | ETA shows as "—" or "Set a monthly target" |
+| Goal already achieved | ETA stops, shows achieved date instead     |
+| Goal cancelled        | ETA stops                                  |
+| Saving rate increased | ETA drops immediately                      |
+| Saving rate decreased | ETA increases immediately                  |
 
 ---
 
@@ -171,22 +178,22 @@ The **savings goal** is a target.
 The **actual savings** is what really happened based on transactions.
 The **gap between the two** is what the AI chatbot uses to give advice.
 
-> *"You planned to save PKR 12,000 this month but you are on track for PKR 10,000. Here are 3 ways to close the gap."*
+> _"You planned to save PKR 12,000 this month but you are on track for PKR 10,000. Here are 3 ways to close the gap."_
 
 ---
 
 ## 7. Summary Table
 
-| Scenario | What Happens |
-|---|---|
-| Month ends | Budget resets, savings balance continues |
-| Unspent budget | Stays as unspent unless carry forward is ON |
-| Withdrawal from savings | Deducted from goal balance, ETA recalculates immediately |
-| Goal deleted | Archived not deleted, status = `cancelled` |
-| Goal achieved | Marked `achieved`, celebration shown, moves to history |
-| Monthly saving target changes | ETA recalculates immediately |
-| No monthly saving set | ETA shows as unknown |
-| Carry forward ON at month end | Unspent budget moves to savings automatically |
+| Scenario                      | What Happens                                             |
+| ----------------------------- | -------------------------------------------------------- |
+| Month ends                    | Budget resets, savings balance continues                 |
+| Unspent budget                | Stays as unspent unless carry forward is ON              |
+| Withdrawal from savings       | Deducted from goal balance, ETA recalculates immediately |
+| Goal deleted                  | Archived not deleted, status = `cancelled`               |
+| Goal achieved                 | Marked `achieved`, celebration shown, moves to history   |
+| Monthly saving target changes | ETA recalculates immediately                             |
+| No monthly saving set         | ETA shows as unknown                                     |
+| Carry forward ON at month end | Unspent budget moves to savings automatically            |
 
 ---
 
@@ -195,16 +202,19 @@ The **gap between the two** is what the AI chatbot uses to give advice.
 > These rules are **not yet implemented** in the backend. Currently frontend/session logic only.
 
 ### Fields needed on the `budgets` collection
+
 - `carry_forward_enabled: Boolean` — default false
 - `unspent_at_month_end: Float` — calculated on last day of month
 
 ### Fields needed on the savings goal (inside `budgets` or separate `goals` collection)
+
 - `status: Enum` — `in_progress`, `achieved`, `cancelled`, `archived`
 - `achieved_at: DateTime` — filled when status becomes `achieved`
 - `monthly_saving_rate: Float` — user's target per month
 - `withdrawal_history: Array` — list of withdrawals with amount and date
 
 ### ETA Calculation (backend or frontend helper)
+
 ```python
 import math
 
@@ -215,6 +225,7 @@ def calculate_eta(remaining: float, monthly_rate: float) -> int:
 ```
 
 ### Transaction type to add for withdrawals
+
 ```
 type: "savings_withdrawal"
 amount: Float
@@ -223,6 +234,25 @@ date: DateTime
 notes: Optional String
 ```
 
+### Frontend Savings Transaction Scope
+
+These are the savings transaction actions currently being handled in the frontend screens:
+
+| Type                 | Status   | Notes                                                                             |
+| -------------------- | -------- | --------------------------------------------------------------------------------- |
+| `savings_deposit`    | Frontend | Manual deposit into a single goal                                                 |
+| `savings_withdrawal` | Frontend | Manual withdrawal from a single goal                                              |
+| `goal_transfer`      | Frontend | Move money between two goals                                                      |
+| `budget_to_savings`  | Deferred | Move unused budget into savings will be handled from the budget section later     |
+| `savings_split`      | Deferred | Split deposits across multiple goals will be handled in the savings section later |
+
+### Frontend Goal Picker Rules
+
+- Deposit and withdrawal use one goal selector box.
+- Goal transfer uses two goal selector boxes.
+- Source and target goals cannot be the same.
+- The target goal selector hides the currently selected source goal.
+
 ---
 
-*Pocket Plan · Savings & Budget Logic · Team CPS · Sprint 0 · v1.0*
+_Pocket Plan · Savings & Budget Logic · Team CPS · Sprint 0 · v1.0_

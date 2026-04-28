@@ -12,6 +12,32 @@ export default function RootLayout() {
       return;
     }
 
+    const previousHandler = global.ErrorUtils?.getGlobalHandler?.();
+    const guardHandler = (error, isFatal) => {
+      const message = String(error?.message || error || "");
+      if (message.includes("Unable to activate keep awake")) {
+        return;
+      }
+
+      if (typeof previousHandler === "function") {
+        previousHandler(error, isFatal);
+      }
+    };
+
+    global.ErrorUtils?.setGlobalHandler?.(guardHandler);
+
+    return () => {
+      if (typeof previousHandler === "function") {
+        global.ErrorUtils?.setGlobalHandler?.(previousHandler);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") {
+      return;
+    }
+
     const backSubscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (router.canGoBack()) {
         router.back();

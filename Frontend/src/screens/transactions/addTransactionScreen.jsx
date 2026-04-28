@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -85,6 +85,18 @@ const CATEGORY_EMOJIS_BY_TYPE = {
   Borrow: BORROW_CATEGORY_EMOJIS
 };
 
+const SAVINGS_ACTIONS = [
+  { key: "savings_deposit", label: "Deposit", emoji: "💰" },
+  { key: "savings_withdrawal", label: "Withdraw", emoji: "💸" },
+  { key: "goal_transfer", label: "Transfer", emoji: "🔁" }
+];
+
+const SAMPLE_GOALS = [
+  { id: "g1", name: "Emergency Fund" },
+  { id: "g2", name: "New Laptop" },
+  { id: "g3", name: "Vacation" }
+];
+
 const GRACE_PERIOD_DAYS = 2;
 const WHEEL_ROW_HEIGHT = 56;
 
@@ -141,6 +153,7 @@ const formatNumberInput = (value) => {
 
 export default function AddTransactionScreen() {
   const router = useRouter();
+  const searchParams = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -157,12 +170,23 @@ export default function AddTransactionScreen() {
 
   const [type, setType] = useState("Expense");
   const [selectedCategory, setSelectedCategory] = useState("food");
+  const [savingsAction, setSavingsAction] = useState("savings_deposit");
+  const [selectedGoal, setSelectedGoal] = useState("");
+  const [transferTargetGoal, setTransferTargetGoal] = useState("");
+  const [goalPickerField, setGoalPickerField] = useState(null);
+  const [goalError, setGoalError] = useState("");
   const [amount, setAmount] = useState("");
+  const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
   const [selectedDate, setSelectedDate] = useState(startOfDay(now));
   const [description, setDescription] = useState("");
   const [dateError, setDateError] = useState("");
 
   const activeCategoryMap = CATEGORY_EMOJIS_BY_TYPE[type] || {};
+
+
+  const selectedGoalName = SAMPLE_GOALS.find((goal) => goal.id === selectedGoal)?.name || "Select goal";
+  const selectedTargetGoalName = SAMPLE_GOALS.find((goal) => goal.id === transferTargetGoal)?.name || "Select target goal";
 
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -170,6 +194,16 @@ export default function AddTransactionScreen() {
     Sora_700Bold,
     Sora_800ExtraBold
   });
+
+  useEffect(() => {
+    const pAction = searchParams?.action ? String(searchParams.action) : "";
+    const pType = searchParams?.type ? String(searchParams.type) : "";
+    const pGoal = searchParams?.goalId ? String(searchParams.goalId) : "";
+
+    if (pType) setType(pType);
+    if (pAction) setSavingsAction(pAction);
+    if (pGoal) setSelectedGoal(pGoal);
+  }, [searchParams]);
 
   const scrollDateWheelToSelected = (animated = false) => {
     const dateIndex = dateSliderOptions.findIndex((d) => isSameDay(d, selectedDate));
@@ -189,6 +223,29 @@ export default function AddTransactionScreen() {
   };
 
   const saveTransaction = () => {
+    if (!String(title ?? "").trim()) {
+      setTitleError("Title is required");
+      return;
+    }
+    setTitleError("");
+    // savings-specific validation
+    setGoalError("");
+    if (type === "Savings") {
+      if (!selectedGoal) {
+        setGoalError("Select a goal");
+        return;
+      }
+      if (savingsAction === "goal_transfer") {
+        if (!transferTargetGoal) {
+          setGoalError("Select a target goal");
+          return;
+        }
+        if (transferTargetGoal === selectedGoal) {
+          setGoalError("Source and target goals must be different");
+          return;
+        }
+      }
+    }
     if (selectedDate < minAllowedDate || selectedDate > maxAllowedDate) {
       setDateError(
         `Allowed range is ${formatDateChip(minAllowedDate)} to ${formatDateChip(maxAllowedDate)}${graceEnabled ? " (grace enabled)" : ""}.`
@@ -201,6 +258,18 @@ export default function AddTransactionScreen() {
     router.back();
   };
 
+  const selectGoal = (goalId) => {
+    if (goalPickerField === "source") {
+      setSelectedGoal(goalId);
+      if (goalId) setGoalError("");
+      if (transferTargetGoal === goalId) setTransferTargetGoal("");
+    }
+    if (goalPickerField === "target") {
+      setTransferTargetGoal(goalId);
+      if (goalId) setGoalError("");
+    }
+    setGoalPickerField(null);
+  };
   return (
     <ScreenContainer style={styles.screen} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 28 }]} showsVerticalScrollIndicator={false}>
@@ -219,37 +288,88 @@ export default function AddTransactionScreen() {
         <View style={styles.typeCard}>
           <Text style={styles.sectionTitle}>Type</Text>
           <View style={styles.typeRow}>
-          {["Expense", "Income", "Transfer", "Borrow"].map((item) => (
+          {["Expense", "Income", "Transfer", "Borrow", "Savings"].map((item) => (
             <Pressable
               key={item}
               style={[styles.typeChip, type === item && styles.typeChipActive]}
               onPress={() => {
                 setType(item);
                 setSelectedCategory(firstCategoryKey(item));
+                if (item !== "Savings") {
+                  setSelectedGoal("");
+                  setSavingsAction("savings_deposit");
+                  setTransferTargetGoal("");
+                  setGoalError("");
+                }
               }}
             >
-              <Text style={[styles.typeChipIcon, type === item && styles.typeChipIconActive]}>{item === "Expense" ? "💸" : item === "Income" ? "💰" : item === "Transfer" ? "🔁" : "🤝"}</Text>
+              <Text style={[styles.typeChipIcon, type === item && styles.typeChipIconActive]}>{item === "Expense" ? "💸" : item === "Income" ? "💰" : item === "Transfer" ? "🔁" : item === "Borrow" ? "🤝" : "🗄️"}</Text>
               <Text style={[styles.typeChipText, type === item && styles.typeChipTextActive]}>{item}</Text>
             </Pressable>
           ))}
           </View>
         </View>
 
-        <View style={styles.categoryCard}>
-          <Text style={styles.sectionTitle}>{type} Category</Text>
-          <View style={styles.categoryGrid}>
-            {Object.entries(activeCategoryMap).map(([key, emoji]) => (
-              <Pressable
-                key={key}
-                style={[styles.categoryChip, selectedCategory === key && styles.categoryChipActive]}
-                onPress={() => setSelectedCategory(key)}
-              >
-                <Text style={styles.categoryEmoji}>{emoji}</Text>
-                <Text style={[styles.categoryText, selectedCategory === key && styles.categoryTextActive]}>{categoryLabel(key)}</Text>
+        {type === "Savings" ? (
+          <View style={styles.savingsPanel}>
+            <View style={styles.savingsHeaderRow}>
+              <Text style={styles.sectionTitle}>Savings Action</Text>
+              <Text style={styles.savingsHeaderEmoji}>🗄️</Text>
+            </View>
+            <View style={styles.savingsActionRow}>
+              {SAVINGS_ACTIONS.map((action) => (
+                <Pressable
+                  key={action.key}
+                  style={[styles.savingsActionChip, savingsAction === action.key && styles.savingsActionChipActive]}
+                  onPress={() => {
+                    setSavingsAction(action.key);
+                    setGoalError("");
+                    if (action.key !== "goal_transfer") setTransferTargetGoal("");
+                  }}
+                >
+                  <Text style={styles.savingsActionEmoji}>{action.emoji}</Text>
+                  <Text style={[styles.savingsActionText, savingsAction === action.key && styles.savingsActionTextActive]}>{action.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.goalSelectionCard}>
+              <Text style={styles.goalSelectionLabel}>{savingsAction === "goal_transfer" ? "Source Goal" : "Goal"}</Text>
+              <Pressable style={styles.goalSelectBox} onPress={() => setGoalPickerField("source")}>
+                <Text style={styles.goalSelectText}>{selectedGoalName}</Text>
+                <Text style={styles.goalSelectChevron}>⌄</Text>
               </Pressable>
-            ))}
+
+              {savingsAction === "goal_transfer" ? (
+                <>
+                  <Text style={[styles.goalSelectionLabel, { marginTop: 12 }]}>Target Goal</Text>
+                  <Pressable style={styles.goalSelectBox} onPress={() => setGoalPickerField("target")}>
+                    <Text style={styles.goalSelectText}>{selectedTargetGoalName}</Text>
+                    <Text style={styles.goalSelectChevron}>⌄</Text>
+                  </Pressable>
+                </>
+              ) : null}
+
+              {goalError ? <Text style={styles.errorText}>{goalError}</Text> : null}
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.categoryCard}>
+            <Text style={styles.sectionTitle}>{type} Category</Text>
+            <View style={styles.categoryGrid}>
+              {Object.entries(activeCategoryMap).map(([key, emoji]) => (
+                <Pressable
+                  key={key}
+                  style={[styles.categoryChip, selectedCategory === key && styles.categoryChipActive]}
+                  onPress={() => setSelectedCategory(key)}
+                >
+                  <Text style={styles.categoryEmoji}>{emoji}</Text>
+                  <Text style={[styles.categoryText, selectedCategory === key && styles.categoryTextActive]}>{categoryLabel(key)}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
 
         <View style={styles.formCard}>
           <Text style={styles.sectionTitle}>Details</Text>
@@ -257,6 +377,17 @@ export default function AddTransactionScreen() {
             <Text style={styles.inlineHintLabel}>Selected Type</Text>
             <Text style={styles.inlineHintValue}>{type}</Text>
           </View>
+          <InputField
+            label="Title"
+            placeholder="e.g., Grocery shopping"
+            value={title}
+            onChangeText={(text) => {
+              setTitle(text);
+              if (String(text ?? "").trim()) setTitleError("");
+            }}
+          />
+          {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+
           <InputField
             label="Amount"
             placeholder="PKR 0"
@@ -321,6 +452,36 @@ export default function AddTransactionScreen() {
           <PrimaryButton label="Save Transaction" style={{ marginTop: 10 }} onPress={saveTransaction} />
         </View>
       </ScrollView>
+      <Modal visible={Boolean(goalPickerField)} transparent animationType="fade" onRequestClose={() => setGoalPickerField(null)}>
+        <Pressable style={styles.goalModalOverlay} onPress={() => setGoalPickerField(null)}>
+          <Pressable style={styles.goalModalCard} onPress={() => {}}>
+            <View style={styles.goalModalHeader}>
+              <Text style={styles.goalModalTitle}>
+                {goalPickerField === "target" ? "Select Target Goal" : "Select Goal"}
+              </Text>
+              <Pressable onPress={() => setGoalPickerField(null)} hitSlop={10}>
+                <Text style={styles.goalModalClose}>✕</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.goalModalSubtitle}>
+              {goalPickerField === "target"
+                ? "Pick a different goal from the source goal."
+                : "Choose the goal this savings action should apply to."}
+            </Text>
+            <View style={styles.goalModalList}>
+              {SAMPLE_GOALS.filter((goal) => !(goalPickerField === "target" && goal.id === selectedGoal)).map((goal) => {
+                const isSelected = goalPickerField === "target" ? transferTargetGoal === goal.id : selectedGoal === goal.id;
+                return (
+                  <Pressable key={goal.id} style={[styles.goalModalItem, isSelected && styles.goalModalItemActive]} onPress={() => selectGoal(goal.id)}>
+                    <Text style={[styles.goalModalItemText, isSelected && styles.goalModalItemTextActive]}>{goal.name}</Text>
+                    {isSelected ? <Text style={styles.goalModalItemCheck}>✓</Text> : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -431,6 +592,89 @@ const styles = StyleSheet.create({
   },
   typeChipTextActive: {
     color: "#FFFFFF"
+  },
+  savingsPanel: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+    padding: 12,
+    marginBottom: 10
+  },
+  savingsHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10
+  },
+  savingsHeaderEmoji: {
+    fontSize: 18
+  },
+  savingsActionRow: {
+    flexDirection: "row",
+    gap: 8
+  },
+  savingsActionChip: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#D4DAFF",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    gap: 4
+  },
+  savingsActionChipActive: {
+    borderColor: "#5C5CDB",
+    backgroundColor: "#EEF0FF"
+  },
+  savingsActionEmoji: {
+    fontSize: 16
+  },
+  savingsActionText: {
+    color: "#2E2FA8",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  savingsActionTextActive: {
+    color: "#1F2937"
+  },
+  goalSelectionCard: {
+    backgroundColor: "#F8FAFF",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+    padding: 12
+  },
+  goalSelectionLabel: {
+    color: "#334155",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold",
+    marginBottom: 8
+  },
+  goalSelectBox: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: "#CBD5FF",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  goalSelectText: {
+    color: "#111827",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold",
+    flex: 1,
+    paddingRight: 10
+  },
+  goalSelectChevron: {
+    color: "#5C5CDB",
+    fontSize: 18,
+    fontFamily: "Sora_700Bold"
   },
   categoryCard: {
     backgroundColor: "#FFFFFF",
@@ -590,5 +834,72 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Sora_600SemiBold",
     marginBottom: 6
+  },
+  goalModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.42)",
+    justifyContent: "center",
+    paddingHorizontal: 16
+  },
+  goalModalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E3E8F3",
+    padding: 14
+  },
+  goalModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6
+  },
+  goalModalTitle: {
+    color: "#111827",
+    fontSize: 16,
+    fontFamily: "Sora_800ExtraBold"
+  },
+  goalModalClose: {
+    color: "#64748B",
+    fontSize: 16,
+    fontFamily: "Sora_700Bold"
+  },
+  goalModalSubtitle: {
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 10
+  },
+  goalModalList: {
+    gap: 8
+  },
+  goalModalItem: {
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#F8FAFF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  goalModalItemActive: {
+    borderColor: "#5C5CDB",
+    backgroundColor: "#EEF0FF"
+  },
+  goalModalItemText: {
+    color: "#1F2937",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold"
+  },
+  goalModalItemTextActive: {
+    color: "#2E2FA8",
+    fontFamily: "Sora_700Bold"
+  },
+  goalModalItemCheck: {
+    color: "#5C5CDB",
+    fontSize: 14,
+    fontFamily: "Sora_800ExtraBold"
   }
 });
