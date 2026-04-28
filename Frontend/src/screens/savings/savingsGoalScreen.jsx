@@ -17,6 +17,52 @@ const formatNumberInput = (value) => {
   return Number(numeric).toLocaleString();
 };
 
+const SPLIT_GOAL_OPTIONS = [
+  { id: "emergency", name: "Emergency Fund" },
+  { id: "laptop", name: "New Laptop" },
+  { id: "vacation", name: "Vacation" },
+  { id: "wedding", name: "Wedding Fund" },
+  { id: "car", name: "Car Down Payment" },
+  { id: "medical", name: "Medical Reserve" },
+  { id: "travel", name: "Travel Fund" }
+];
+const MAX_SPLIT_GOALS = SPLIT_GOAL_OPTIONS.length;
+
+const rebalanceSplitGoals = (items) => {
+  if (!items.length) return items;
+
+  const baseShare = Math.floor(100 / items.length);
+  const remainder = 100 - baseShare * items.length;
+
+  return items.map((item, index) => ({
+    ...item,
+    percentage: String(baseShare + (index < remainder ? 1 : 0)),
+    isPrimary: index === 0
+  }));
+};
+
+const createSplitGoals = (count, sourceGoals = []) => {
+  const safeCount = Math.max(1, Math.min(MAX_SPLIT_GOALS, Number(count) || 1));
+  const trimmedGoals = sourceGoals.slice(0, safeCount).map((item, index) => ({
+    ...item,
+    isPrimary: index === 0
+  }));
+
+  while (trimmedGoals.length < safeCount) {
+    const usedGoalIds = trimmedGoals.map((item) => item.goalId);
+    const nextGoalId = SPLIT_GOAL_OPTIONS.find((goal) => !usedGoalIds.includes(goal.id))?.id ?? SPLIT_GOAL_OPTIONS[0].id;
+
+    trimmedGoals.push({
+      id: `split-${Date.now()}-${trimmedGoals.length + 1}`,
+      goalId: nextGoalId,
+      percentage: "0",
+      isPrimary: false
+    });
+  }
+
+  return rebalanceSplitGoals(trimmedGoals);
+};
+
 export default function SavingsGoalScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -31,6 +77,17 @@ export default function SavingsGoalScreen() {
   const [draftMonthlyContribution, setDraftMonthlyContribution] = useState(monthlyContribution);
   const [showOverallPercent, setShowOverallPercent] = useState(false);
   const [showMonthlyPercent, setShowMonthlyPercent] = useState(false);
+  const [isCreatingNewGoal, setIsCreatingNewGoal] = useState(false);
+  const [goals, setGoals] = useState([
+    { id: `user-${Date.now()}`, name: goalName, target: String(targetAmount), monthly: String(monthlyContribution) }
+  ]);
+  const [splitGoals, setSplitGoals] = useState(() => createSplitGoals(2, [
+    { id: "split-1", goalId: "emergency", percentage: "50", isPrimary: true },
+    { id: "split-2", goalId: "laptop", percentage: "30", isPrimary: false },
+    { id: "split-3", goalId: "vacation", percentage: "20", isPrimary: false }
+  ]));
+  const [splitGoalPickerIndex, setSplitGoalPickerIndex] = useState(null);
+  const [extraSplitGoalsEnabled, setExtraSplitGoalsEnabled] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -49,6 +106,14 @@ export default function SavingsGoalScreen() {
   const monthlyProgress = recommendedMonthly > 0 ? Math.round((monthlyValue / recommendedMonthly) * 100) : 0;
   const monthlyHealth = monthlyProgress >= 100 ? "On Track" : monthlyProgress >= 75 ? "Caution" : "Off Track";
   const monthlyHealthColor = monthlyHealth === "On Track" ? "#16A34A" : monthlyHealth === "Caution" ? "#EAB308" : "#DC2626";
+  const splitTotal = splitGoals.reduce((sum, item) => sum + (Number(item.percentage) || 0), 0);
+  const splitRemaining = Math.max(0, 100 - splitTotal);
+  const isPremium = true;
+
+  const availableGoals = [
+    ...SPLIT_GOAL_OPTIONS,
+    ...goals.map((g) => ({ id: g.id, name: g.name }))
+  ];
 
   const paceMessage = `At ${toCurrency(monthlyValue)}/month you will reach your goal in ${monthsToGoal} month${monthsToGoal === 1 ? "" : "s"} 🎯`;
 
@@ -74,10 +139,33 @@ export default function SavingsGoalScreen() {
     setIsSheetOpen(true);
   };
 
+  const createNewGoal = () => {
+    // prepare empty drafts for a new saving plan
+    setDraftGoalName("");
+    setDraftTargetAmount("0");
+    setDraftMonthlyContribution("0");
+    setIsCreatingNewGoal(true);
+    setIsSheetOpen(true);
+  };
+
   const saveEditSheet = () => {
-    setGoalName(draftGoalName.trim() || "New Laptop");
-    setTargetAmount(sanitizeNumber(draftTargetAmount) || "0");
-    setMonthlyContribution(sanitizeNumber(draftMonthlyContribution) || "0");
+    const name = draftGoalName.trim() || "New Goal";
+    const target = sanitizeNumber(draftTargetAmount) || "0";
+    const monthly = sanitizeNumber(draftMonthlyContribution) || "0";
+
+    if (isCreatingNewGoal) {
+      // create a new user goal and add it to the goals list
+      const newGoal = { id: `user-${Date.now()}`, name, target: String(target), monthly: String(monthly) };
+      setGoals((current) => [...current, newGoal]);
+      // Do NOT switch the main displayed goal — keep the existing goal visible
+      setIsCreatingNewGoal(false);
+    } else {
+      // editing existing main goal
+      setGoalName(name || "New Laptop");
+      setTargetAmount(target);
+      setMonthlyContribution(monthly);
+    }
+
     setIsSheetOpen(false);
   };
 
@@ -89,6 +177,76 @@ export default function SavingsGoalScreen() {
   const revealMonthlyProgress = () => {
     setShowMonthlyPercent(true);
     setTimeout(() => setShowMonthlyPercent(false), 1600);
+  };
+
+  const updateSplitGoal = (index, changes) => {
+    setSplitGoals((current) => {
+      const nextGoals = current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...changes } : item));
+
+      if (changes.percentage !== undefined) {
+        const requestedValue = Number(sanitizeNumber(String(changes.percentage))) || 0;
+        const otherTotal = current.reduce((sum, item, itemIndex) => {
+          if (itemIndex === index) return sum;
+          return sum + (Number(item.percentage) || 0);
+        }, 0);
+        const allowedValue = Math.max(0, 100 - otherTotal);
+
+        nextGoals[index] = {
+          ...nextGoals[index],
+          percentage: String(Math.min(requestedValue, allowedValue))
+        };
+      }
+
+      return nextGoals;
+    });
+  };
+
+  const addSplitGoal = () => {
+    if (!isPremium) return;
+    setSplitGoals((current) => {
+      if (current.length >= MAX_SPLIT_GOALS) return current;
+      const nextGoalId = availableGoals.find((goal) => !current.some((item) => item.goalId === goal.id))?.id || availableGoals[0].id;
+      const nextIndex = current.length;
+
+      setSplitGoalPickerIndex(nextIndex);
+
+      return [
+        ...current,
+        {
+          id: `split-${current.length + 1}`,
+          goalId: nextGoalId,
+          percentage: "0",
+          isPrimary: false
+        }
+      ];
+    });
+  };
+
+  const removeSplitGoal = (index) => {
+    setSplitGoals((current) => {
+      if (current.length <= 1) return current;
+      return current.filter((_, itemIndex) => itemIndex !== index).map((item, itemIndex) => ({
+        ...item,
+        isPrimary: itemIndex === 0
+      }));
+    });
+  };
+
+  const balanceSplitGoals = () => {
+    setSplitGoals((current) => {
+      if (!current.length) return current;
+      return rebalanceSplitGoals(current);
+    });
+  };
+
+  const saveSplitGoals = () => {
+    setSplitGoals((current) => current.map((item) => ({ ...item })));
+  };
+
+  const selectSplitGoal = (goalId) => {
+    if (splitGoalPickerIndex === null) return;
+    updateSplitGoal(splitGoalPickerIndex, { goalId });
+    setSplitGoalPickerIndex(null);
   };
 
   if (!fontsLoaded) return null;
@@ -196,20 +354,6 @@ export default function SavingsGoalScreen() {
               <Text style={styles.etaMessage}>{paceMessage}</Text>
             </View>
 
-            <View style={styles.quickActionsRow}>
-              <PrimaryButton
-                label="Deposit"
-                onPress={() => router.push(`/add-transaction?type=Savings&action=savings_deposit&goalId=g2`)}
-                style={{ flex: 1, marginRight: 8 }}
-              />
-              <PrimaryButton
-                label="Withdraw"
-                variant="secondary"
-                onPress={() => router.push(`/add-transaction?type=Savings&action=savings_withdrawal&goalId=g2`)}
-                style={{ flex: 1 }}
-              />
-            </View>
-
             <View style={styles.overviewFooterSpace} />
           </View>
         ) : null}
@@ -243,18 +387,109 @@ export default function SavingsGoalScreen() {
                 <Text style={styles.setupLabel}>Started</Text>
                 <Text style={styles.setupValue}>{startedLabel}</Text>
               </View>
+
+              <PrimaryButton
+                label="Add Saving Plan"
+                style={styles.planActionButton}
+                onPress={createNewGoal}
+              />
             </View>
 
-            <View style={styles.premiumCard}>
-              <View style={styles.premiumRow}>
-                <View style={styles.premiumLeft}>
-                  <Ionicons name="star" size={16} color="#7C3AED" />
-                  <Text style={styles.premiumTitle}>Add Another Goal</Text>
-                </View>
-                <View style={styles.premiumBadge}>
-                  <Text style={styles.premiumBadgeText}>Premium</Text>
+            <View style={styles.card}>
+              <View style={styles.cardHeadRow}>
+                <Text style={styles.sectionTitle}>Split Allocation</Text>
+              </View>
+              <Text style={styles.splitHint}>
+                Add another goal when you want to extend the plan.
+              </Text>
+
+              <View style={styles.splitControlCard}>
+                <View style={styles.splitControlRow}>
+                  <View style={styles.splitControlCopy}>
+                    <Text style={styles.splitControlTitle}>Extra goals</Text>
+                    <Text style={styles.splitControlText}>
+                      Activate this to add new rows manually.
+                    </Text>
+                  </View>
+                  <Pressable
+                    style={[styles.splitToggle, extraSplitGoalsEnabled && styles.splitToggleActive, !isPremium && styles.splitToggleDisabled]}
+                    onPress={() => {
+                      if (!isPremium) return;
+                      setExtraSplitGoalsEnabled((current) => !current);
+                    }}
+                  >
+                    <View style={[styles.splitToggleKnob, extraSplitGoalsEnabled && styles.splitToggleKnobActive]} />
+                  </Pressable>
                 </View>
               </View>
+
+              <View style={styles.splitActionRow}>
+                <Pressable style={styles.splitActionBtn} onPress={addSplitGoal}>
+                  <Ionicons name="add-circle-outline" size={14} color="#2E2FA8" />
+                  <Text style={styles.splitActionBtnText}>Add Split Row</Text>
+                </Pressable>
+
+                <Pressable style={styles.splitActionBtn} onPress={balanceSplitGoals}>
+                  <Ionicons name="scale" size={14} color="#2E2FA8" />
+                  <Text style={styles.splitActionBtnText}>Balance</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.splitSummaryRow}>
+                <View style={styles.splitSummaryPill}>
+                  <Text style={styles.splitSummaryLabel}>Total</Text>
+                  <Text style={styles.splitSummaryValue}>{splitTotal}%</Text>
+                </View>
+                <View style={styles.splitSummaryPill}>
+                  <Text style={styles.splitSummaryLabel}>Remaining</Text>
+                  <Text style={styles.splitSummaryValue}>{splitRemaining}%</Text>
+                </View>
+              </View>
+
+              <View style={styles.splitList}>
+                {splitGoals.map((item, index) => {
+                  const selectedGoalName = availableGoals.find((goal) => goal.id === item.goalId)?.name ?? "Select goal";
+                  return (
+                    <View key={item.id} style={styles.splitRow}>
+                      <View style={styles.splitRowHeader}>
+                        <View style={styles.splitRowTitleWrap}>
+                          <Text style={styles.splitRowTitle}>{index === 0 ? "Primary Goal" : `Goal ${index + 1}`}</Text>
+                          {index === 0 ? <Text style={styles.splitPrimaryBadge}>Primary</Text> : null}
+                        </View>
+                        <Pressable
+                          onPress={() => removeSplitGoal(index)}
+                          disabled={splitGoals.length <= 1}
+                          style={[styles.splitRemoveBtn, splitGoals.length <= 1 && styles.splitRemoveBtnDisabled]}
+                        >
+                          <Ionicons name="close" size={14} color={splitGoals.length <= 1 ? "#CBD5E1" : "#DC2626"} />
+                        </Pressable>
+                      </View>
+
+                      <Pressable style={styles.splitGoalBox} onPress={() => setSplitGoalPickerIndex(index)}>
+                        <Text style={styles.splitGoalText}>{selectedGoalName}</Text>
+                        <Text style={styles.goalSelectChevron}>⌄</Text>
+                      </Pressable>
+
+                      <View style={styles.splitPercentRow}>
+                        <Text style={styles.splitPercentLabel}>Share</Text>
+                        <View style={styles.splitPercentInputWrap}>
+                          <TextInput
+                            style={styles.splitPercentInput}
+                            value={String(item.percentage)}
+                            onChangeText={(text) => updateSplitGoal(index, { percentage: sanitizeNumber(text) })}
+                            keyboardType="number-pad"
+                            placeholder="0"
+                            placeholderTextColor="#9CA3AF"
+                          />
+                          <Text style={styles.splitPercentSuffix}>%</Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
+              <PrimaryButton label="Save" style={styles.splitSaveButton} onPress={saveSplitGoals} />
             </View>
           </>
         ) : null}
@@ -264,7 +499,7 @@ export default function SavingsGoalScreen() {
         <Pressable style={styles.sheetOverlay} onPress={() => setIsSheetOpen(false)}>
           <Pressable style={[styles.sheet, { paddingBottom: insets.bottom + 14 }]} onPress={() => {}}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Edit Goal</Text>
+            <Text style={styles.sheetTitle}>{isCreatingNewGoal ? "Create Goal" : "Edit Goal"}</Text>
 
             <Text style={styles.sheetLabel}>Goal Name</Text>
             <TextInput
@@ -302,6 +537,31 @@ export default function SavingsGoalScreen() {
               <Pressable style={[styles.sheetBtn, styles.sheetBtnPrimary]} onPress={saveEditSheet}>
                 <Text style={styles.sheetBtnPrimaryText}>Save</Text>
               </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={splitGoalPickerIndex !== null} transparent animationType="fade" onRequestClose={() => setSplitGoalPickerIndex(null)}>
+        <Pressable style={styles.goalModalOverlay} onPress={() => setSplitGoalPickerIndex(null)}>
+          <Pressable style={styles.goalModalCard} onPress={() => {}}>
+            <View style={styles.goalModalHeader}>
+              <Text style={styles.goalModalTitle}>Select Split Goal</Text>
+              <Pressable onPress={() => setSplitGoalPickerIndex(null)} hitSlop={10}>
+                <Text style={styles.goalModalClose}>✕</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.goalModalSubtitle}>Choose the goal for this split row.</Text>
+            <View style={styles.goalModalList}>
+              {availableGoals.filter((goal) => !splitGoals.some((item, index) => index !== splitGoalPickerIndex && item.goalId === goal.id)).map((goal) => {
+                const isSelected = splitGoals[splitGoalPickerIndex]?.goalId === goal.id;
+                return (
+                  <Pressable key={goal.id} style={[styles.goalModalItem, isSelected && styles.goalModalItemActive]} onPress={() => selectSplitGoal(goal.id)}>
+                    <Text style={[styles.goalModalItemText, isSelected && styles.goalModalItemTextActive]}>{goal.name}</Text>
+                    {isSelected ? <Text style={styles.goalModalItemCheck}>✓</Text> : null}
+                  </Pressable>
+                );
+              })}
             </View>
           </Pressable>
         </Pressable>
@@ -566,10 +826,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     fontFamily: "Sora_700Bold"
   },
-  quickActionsRow: {
-    flexDirection: "row",
-    marginTop: 12
-  },
   overviewFooterSpace: {
     height: 28
   },
@@ -591,6 +847,9 @@ const styles = StyleSheet.create({
     color: "#2E2FA8",
     fontSize: 12,
     fontFamily: "Sora_700Bold"
+  },
+  planActionButton: {
+    marginTop: 14
   },
   setupRow: {
     flexDirection: "row",
@@ -639,10 +898,315 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8
   },
+  premiumActionBtn: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#D6D3FE",
+    backgroundColor: "#F5F3FF",
+    paddingHorizontal: 12,
+    paddingVertical: 6
+  },
+  premiumActionBtnDisabled: {
+    backgroundColor: "#EEF2F7",
+    borderColor: "#E2E8F0"
+  },
+  premiumActionBtnText: {
+    color: "#6D28D9",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
   premiumTitle: {
     color: "#1F2937",
     fontSize: 14,
     fontFamily: "Sora_700Bold"
+  },
+  splitHint: {
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 10
+  },
+  splitControlCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E6EBFB",
+    backgroundColor: "#FBFCFF",
+    padding: 12,
+    marginBottom: 10
+  },
+  splitControlRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12
+  },
+  splitControlCopy: {
+    flex: 1
+  },
+  splitControlTitle: {
+    color: "#1F2937",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  splitControlText: {
+    marginTop: 3,
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 16,
+    fontFamily: "Sora_500Medium"
+  },
+  extraGoalBtn: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#F8FAFF",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  extraGoalBtnActive: {
+    borderColor: "#5C5CDB",
+    backgroundColor: "#EEF0FF"
+  },
+  extraGoalBtnDisabled: {
+    backgroundColor: "#EEF2F7",
+    borderColor: "#E2E8F0"
+  },
+  extraGoalBtnText: {
+    color: "#2E2FA8",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  extraGoalBtnTextActive: {
+    color: "#5C5CDB"
+  },
+  splitToggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    flexShrink: 0
+  },
+  splitToggleActive: {
+    backgroundColor: "#5C5CDB"
+  },
+  splitToggleDisabled: {
+    opacity: 0.5
+  },
+  splitToggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    transform: [{ translateX: 0 }]
+  },
+  splitToggleKnobActive: {
+    transform: [{ translateX: 19 }]
+  },
+  splitActionRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10
+  },
+  splitActionBtn: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#F8FAFF",
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6
+  },
+  splitActionBtnText: {
+    color: "#2E2FA8",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  splitSaveButton: {
+    marginBottom: 10
+  },
+  splitSavedText: {
+    color: "#64748B",
+    fontSize: 11,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 10
+  },
+  splitSummaryRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10
+  },
+  splitSummaryPill: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+    backgroundColor: "#FBFCFF",
+    paddingHorizontal: 10,
+    paddingVertical: 8
+  },
+  splitSummaryLabel: {
+    color: "#64748B",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold"
+  },
+  splitSummaryValue: {
+    marginTop: 3,
+    color: "#1F2937",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold"
+  },
+  splitList: {
+    gap: 10
+  },
+  splitRow: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+    backgroundColor: "#F8FAFF",
+    padding: 12
+  },
+  splitRowHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8
+  },
+  splitRowTitleWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  splitRowTitle: {
+    color: "#1F2937",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  splitPrimaryBadge: {
+    color: "#6D28D9",
+    fontSize: 10,
+    fontFamily: "Sora_700Bold",
+    backgroundColor: "#F3E8FF",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3
+  },
+  splitRemoveBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    backgroundColor: "#FFF1F2",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  splitRemoveBtnDisabled: {
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0"
+  },
+  splitGoalBox: {
+    minHeight: 46,
+    borderWidth: 1,
+    borderColor: "#CBD5FF",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8
+  },
+  splitGoalText: {
+    color: "#111827",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold",
+    flex: 1,
+    paddingRight: 10
+  },
+  splitPercentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8
+  },
+  splitPercentLabel: {
+    color: "#475569",
+    fontSize: 12,
+    fontFamily: "Sora_600SemiBold"
+  },
+  splitPercentInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    minWidth: 92
+  },
+  splitPercentInput: {
+    flex: 1,
+    minWidth: 32,
+    color: "#0F172A",
+    fontSize: 13,
+    fontFamily: "Sora_700Bold",
+    paddingVertical: 8,
+    textAlign: "right"
+  },
+  splitPercentSuffix: {
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold",
+    marginLeft: 4
+  },
+  splitFooterNote: {
+    color: "#64748B",
+    fontSize: 11,
+    fontFamily: "Sora_500Medium",
+    marginTop: 10
+  },
+  splitCountGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10
+  },
+  splitCountChip: {
+    minWidth: 72,
+    flexGrow: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+    backgroundColor: "#F8FAFF",
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  splitCountChipActive: {
+    borderColor: "#5C5CDB",
+    backgroundColor: "#EEF0FF"
+  },
+  splitCountChipText: {
+    color: "#1F2937",
+    fontSize: 16,
+    fontFamily: "Sora_800ExtraBold"
+  },
+  splitCountChipLabel: {
+    marginTop: 2,
+    color: "#64748B",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold"
+  },
+  splitCountChipTextActive: {
+    color: "#2E2FA8"
   },
   premiumBadge: {
     borderRadius: 999,
@@ -729,5 +1293,72 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 12,
     fontFamily: "Sora_700Bold"
+  },
+  goalModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.35)",
+    justifyContent: "center",
+    paddingHorizontal: 16
+  },
+  goalModalCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E3E8F3",
+    padding: 14
+  },
+  goalModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6
+  },
+  goalModalTitle: {
+    color: "#1F2937",
+    fontSize: 16,
+    fontFamily: "Sora_800ExtraBold"
+  },
+  goalModalClose: {
+    color: "#64748B",
+    fontSize: 16,
+    fontFamily: "Sora_700Bold"
+  },
+  goalModalSubtitle: {
+    color: "#64748B",
+    fontSize: 12,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 10
+  },
+  goalModalList: {
+    gap: 8
+  },
+  goalModalItem: {
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#F8FAFF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  goalModalItemActive: {
+    borderColor: "#5C5CDB",
+    backgroundColor: "#EEF0FF"
+  },
+  goalModalItemText: {
+    color: "#1F2937",
+    fontSize: 13,
+    fontFamily: "Sora_600SemiBold"
+  },
+  goalModalItemTextActive: {
+    color: "#2E2FA8",
+    fontFamily: "Sora_700Bold"
+  },
+  goalModalItemCheck: {
+    color: "#5C5CDB",
+    fontSize: 14,
+    fontFamily: "Sora_800ExtraBold"
   }
 });
