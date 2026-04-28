@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Stack } from "expo-router";
-import { BackHandler, Platform } from "react-native";
+import { BackHandler, LogBox, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
@@ -11,6 +11,9 @@ export default function RootLayout() {
     if (Platform.OS !== "android") {
       return;
     }
+
+    // Ignore noisy development keep-awake activation failures coming from Expo dev tools.
+    LogBox.ignoreLogs(["Unable to activate keep awake"]);
 
     const previousHandler = global.ErrorUtils?.getGlobalHandler?.();
     const guardHandler = (error, isFatal) => {
@@ -30,6 +33,31 @@ export default function RootLayout() {
       if (typeof previousHandler === "function") {
         global.ErrorUtils?.setGlobalHandler?.(previousHandler);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    const previousUnhandled = globalThis.onunhandledrejection;
+    globalThis.onunhandledrejection = (event) => {
+      const message = String(event?.reason?.message || event?.reason || "");
+      if (message.includes("Unable to activate keep awake")) {
+        if (typeof event?.preventDefault === "function") {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (typeof previousUnhandled === "function") {
+        previousUnhandled(event);
+      }
+    };
+
+    return () => {
+      globalThis.onunhandledrejection = previousUnhandled;
     };
   }, []);
 
@@ -74,6 +102,7 @@ export default function RootLayout() {
         <Stack.Screen name="privacy-policy" />
         <Stack.Screen name="contact" />
         <Stack.Screen name="faq" />
+        <Stack.Screen name="change-theme" />
       </Stack>
     </SafeAreaProvider>
   );
