@@ -44,73 +44,100 @@ export default function BudgetHelpScreen() {
         {section === "allocation" ? (
           <View style={styles.sectionStack}>
             <View style={[styles.sectionBox, styles.boxPurple]}>
-            <Text style={styles.sectionHead}>🟣 Steps</Text>
-            <Text style={styles.item}>1. Enter monthly budget first.</Text>
-            <Text style={styles.item}>2. Allocate limits per category.</Text>
-            <Text style={styles.item}>3. Use Split Evenly if you want a quick balanced start.</Text>
-            <Text style={styles.item}>4. Fine tune categories based on your spending priorities.</Text>
-            <Text style={styles.item}>5. Save Snapshot if you want to reuse this plan later.</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="information-circle" size={16} color="#6D28D9" />
+                <Text style={styles.sectionHead}>Steps</Text>
+              </View>
+              <Text style={styles.item}>1. Enter monthly budget first.</Text>
+              <Text style={styles.item}>2. Allocate limits per category.</Text>
+              <Text style={styles.item}>3. Use Split Evenly if you want a quick balanced start.</Text>
+              <Text style={styles.item}>4. Fine tune categories based on your spending priorities.</Text>
+              <Text style={styles.item}>5. Save Snapshot if you want to reuse this plan later.</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxGreen]}>
-            <Text style={styles.sectionHead}>🟢 When To Allocate</Text>
-            <Text style={styles.item}>Best practice is to set allocation at the start of the month, then adjust as needed if your real spending pattern changes.</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+                <Text style={styles.sectionHead}>When To Allocate</Text>
+              </View>
+              <Text style={styles.item}>Best practice is to set allocation at the start of the month, then adjust as needed if your real spending pattern changes.</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxAmber]}>
-            <Text style={styles.sectionHead}>🟡 Mid-Month Update Warning</Text>
-            <Text style={styles.item}>If you edit after spending has already started, you will see a warning for transparency.</Text>
-            <Text style={styles.item}>Warning options:</Text>
-            <Text style={styles.item}>- Cancel</Text>
-            <Text style={styles.item}>- Update Anyway</Text>
-            <Text style={styles.item}>- Don't Show Again (for the rest of this Allocation session)</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="warning" size={16} color="#D97706" />
+                <Text style={styles.sectionHead}>Mid-Month Update Warning</Text>
+              </View>
+              <Text style={styles.item}>If you edit after spending has already started, you will see a warning for transparency.</Text>
+              <Text style={styles.item}>Warning options:</Text>
+              <Text style={styles.item}>- Cancel</Text>
+              <Text style={styles.item}>- Update Anyway</Text>
+              <Text style={styles.item}>- Don't Show Again (for the rest of this Allocation session)</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxRed]}>
-            <Text style={styles.sectionHead}>🔴 Clear Plan Warning</Text>
-            <Text style={styles.item}>Clear Plan shows a confirmation dialog before resetting all limits to 0.</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="alert" size={16} color="#DC2626" />
+                <Text style={styles.sectionHead}>Clear Plan Warning</Text>
+              </View>
+              <Text style={styles.item}>Clear Plan shows a confirmation dialog before resetting all limits to 0.</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxPurple]}>
-            <Text style={styles.sectionHead}>🟣 Split Evenly Example</Text>
-            <Text style={styles.item}>Example: Budget = PKR 75,000 and 5 categories selected. Each category gets PKR 15,000 (or near-even distribution when remainder exists).</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="layers" size={16} color="#6D28D9" />
+                <Text style={styles.sectionHead}>Split Evenly Example</Text>
+              </View>
+              <Text style={styles.item}>Example: Budget = PKR 75,000 and 5 categories selected. Each category gets PKR 15,000 (or near-even distribution when remainder exists).</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxGrey]}>
-            <Text style={styles.sectionHead}>⚫ Save Snapshot</Text>
-            <Text style={styles.item}>Saves the current plan for quick reload in this session. (Will be removed once APIs are created to reduce load and auto-save.)</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="document-text" size={16} color="#4B5563" />
+                <Text style={styles.sectionHead}>Save Snapshot</Text>
+              </View>
+              <Text style={styles.item}>Saves the current plan for quick reload in this session. (Will be removed once APIs are created to reduce load and auto-save.)</Text>
             </View>
           </View>
         ) : (
           <View style={styles.sectionStack}>
             <View style={[styles.sectionBox, styles.boxPurple]}>
-            <Text style={styles.sectionHead}>🟣 How It Works</Text>
-            <Text style={styles.item}>Overview shows progress only for categories where spending exists.</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="information-circle" size={16} color="#6D28D9" />
+                <Text style={styles.sectionHead}>How It Works</Text>
+              </View>
+              <Text style={styles.item}>Overview shows progress only for categories where spending exists.</Text>
             </View>
 
             <View style={[styles.sectionBox, styles.boxAmber]}>
-            <Text style={styles.sectionHead}>🟡 Visual Status Guide</Text>
-            <View style={styles.legendRow}>
-              <View style={[styles.legendDot, { backgroundColor: "#16A34A" }]} />
-              <Text style={styles.item}>0% to 60% used</Text>
-            </View>
-            <View style={styles.legendRow}>
-              <View style={[styles.legendDot, { backgroundColor: "#D97706" }]} />
-              <Text style={styles.item}>61% to 80% used</Text>
-            </View>
-            <View style={styles.legendRow}>
-              <View style={[styles.legendDot, { backgroundColor: "#EA580C" }]} />
-              <Text style={styles.item}>81% to 99% used (critical)</Text>
-            </View>
-            <View style={styles.legendRow}>
-              <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />
-              <Text style={styles.item}>100%+ used (over limit)</Text>
-            </View>
+              <View style={styles.headRow}>
+                <Ionicons name="bulb" size={16} color="#D97706" />
+                <Text style={styles.sectionHead}>Visual Status Guide</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#16A34A" }]} />
+                <Text style={styles.item}>0% to 60% used</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#D97706" }]} />
+                <Text style={styles.item}>61% to 80% used</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#EA580C" }]} />
+                <Text style={styles.item}>81% to 99% used (critical)</Text>
+              </View>
+              <View style={styles.legendRow}>
+                <View style={[styles.legendDot, { backgroundColor: "#DC2626" }]} />
+                <Text style={styles.item}>100%+ used (over limit)</Text>
+              </View>
             </View>
 
             <View style={[styles.sectionBox, styles.boxRed]}>
-            <Text style={styles.sectionHead}>🔴 Priority Check</Text>
-            <Text style={styles.item}>Use Over Limit and Critical summary cards first to identify risk categories quickly.</Text>
+              <View style={styles.headRow}>
+                <Ionicons name="alert-circle" size={16} color="#DC2626" />
+                <Text style={styles.sectionHead}>Priority Check</Text>
+              </View>
+              <Text style={styles.item}>Use Over Limit and Critical summary cards first to identify risk categories quickly.</Text>
             </View>
           </View>
         )}
@@ -195,6 +222,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Sora_700Bold",
     marginTop: 6,
+    marginBottom: 4
+  },
+  headRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
     marginBottom: 4
   },
   legendRow: {

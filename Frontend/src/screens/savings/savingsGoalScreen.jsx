@@ -7,6 +7,7 @@ import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800Extra
 import { Ionicons } from "@expo/vector-icons";
 
 import ScreenContainer from "../../components/common/screenContainer";
+import PrimaryButton from "../../components/common/primaryButton";
 
 const sanitizeNumber = (value) => value.replace(/[^0-9]/g, "");
 const toCurrency = (value) => `PKR ${Math.max(0, Number(value) || 0).toLocaleString()}`;
@@ -193,6 +194,20 @@ export default function SavingsGoalScreen() {
 
             <View style={styles.motivationBox}>
               <Text style={styles.etaMessage}>{paceMessage}</Text>
+            </View>
+
+            <View style={styles.quickActionsRow}>
+              <PrimaryButton
+                label="Deposit"
+                onPress={() => router.push(`/add-transaction?type=Savings&action=savings_deposit&goalId=g2`)}
+                style={{ flex: 1, marginRight: 8 }}
+              />
+              <PrimaryButton
+                label="Withdraw"
+                variant="secondary"
+                onPress={() => router.push(`/add-transaction?type=Savings&action=savings_withdrawal&goalId=g2`)}
+                style={{ flex: 1 }}
+              />
             </View>
 
             <View style={styles.overviewFooterSpace} />
@@ -550,6 +565,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 19,
     fontFamily: "Sora_700Bold"
+  },
+  quickActionsRow: {
+    flexDirection: "row",
+    marginTop: 12
   },
   overviewFooterSpace: {
     height: 28

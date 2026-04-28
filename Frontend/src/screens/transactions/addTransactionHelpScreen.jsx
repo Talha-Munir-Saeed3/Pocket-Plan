@@ -65,16 +65,23 @@ export default function AddTransactionHelpScreen() {
         {activeSection === "create" ? (
         <View style={styles.sectionStack}>
         <View style={[styles.card, styles.purpleCard]}>
-          <Text style={styles.sectionHead}>🟣 How To Add A Transaction</Text>
-          <View style={styles.stepItem}><Text style={styles.stepBadge}>1</Text><Text style={styles.item}>Choose type first: Expense, Income, Transfer, or Borrow.</Text></View>
-          <View style={styles.stepItem}><Text style={styles.stepBadge}>2</Text><Text style={styles.item}>Pick the matching category emoji.</Text></View>
-          <View style={styles.stepItem}><Text style={styles.stepBadge}>3</Text><Text style={styles.item}>Enter amount in numbers only.</Text></View>
-          <View style={styles.stepItem}><Text style={styles.stepBadge}>4</Text><Text style={styles.item}>Select a date from the allowed date wheel.</Text></View>
-          <View style={styles.stepItem}><Text style={styles.stepBadge}>5</Text><Text style={styles.item}>Description is optional. Add a note only if needed, then press Save Transaction.</Text></View>
+          <View style={styles.headRow}>
+            <Ionicons name="information-circle" size={16} color="#6D28D9" />
+            <Text style={styles.sectionHead}>How To Add A Transaction</Text>
+          </View>
+          <View style={styles.stepItem}><Text style={styles.stepBadge}>1</Text><Text style={styles.item}>Choose type first: Expense, Income, Transfer, Borrow, or Savings.</Text></View>
+          <View style={styles.stepItem}><Text style={styles.stepBadge}>2</Text><Text style={styles.item}>Pick the matching category or savings goal.</Text></View>
+          <View style={styles.stepItem}><Text style={styles.stepBadge}>3</Text><Text style={styles.item}>Enter a title. It is required for every transaction.</Text></View>
+          <View style={styles.stepItem}><Text style={styles.stepBadge}>4</Text><Text style={styles.item}>Enter amount in numbers only.</Text></View>
+          <View style={styles.stepItem}><Text style={styles.stepBadge}>5</Text><Text style={styles.item}>Select a date from the allowed date wheel.</Text></View>
+          <View style={styles.stepItem}><Text style={styles.stepBadge}>6</Text><Text style={styles.item}>Description is optional. Add a note only if needed, then press Save Transaction.</Text></View>
         </View>
         <View style={[styles.card, styles.greenCard]}>
-          <Text style={styles.sectionHead}>🟢 Best Practice</Text>
-          <Text style={styles.item}>Enter type and amount first, then category and date, so entries stay fast and consistent.</Text>
+          <View style={styles.headRow}>
+            <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+            <Text style={styles.sectionHead}>Best Practice</Text>
+          </View>
+          <Text style={styles.item}>Title, type, and amount come first so entries stay fast and easy to scan later.</Text>
         </View>
         </View>
         ) : null}
@@ -82,13 +89,19 @@ export default function AddTransactionHelpScreen() {
         {activeSection === "grace" ? (
         <View style={styles.sectionStack}>
         <View style={[styles.card, styles.amberCard]}>
-          <Text style={styles.sectionHead}>🟡 Grace Period Rule</Text>
+          <View style={styles.headRow}>
+            <Ionicons name="warning" size={16} color="#D97706" />
+            <Text style={styles.sectionHead}>Grace Period Rule</Text>
+          </View>
           <Text style={styles.body}>
             Transactions are kept inside the current month to avoid report imbalance. A grace window of 2 days is allowed at month start.
           </Text>
         </View>
         <View style={[styles.card, styles.amberCard]}>
-          <Text style={styles.sectionHead}>🟡 Allowed Date Window</Text>
+          <View style={styles.headRow}>
+            <Ionicons name="bulb" size={16} color="#D97706" />
+            <Text style={styles.sectionHead}>Allowed Date Window</Text>
+          </View>
           <View style={styles.highlightBox}>
             <Text style={styles.highlightText}>Day 1-2: Previous month dates are allowed.</Text>
             <Text style={styles.highlightText}>Day 3 onward: Previous month dates are locked.</Text>
@@ -99,12 +112,16 @@ export default function AddTransactionHelpScreen() {
 
         {activeSection === "types" ? (
         <View style={[styles.card, styles.purpleCard]}>
-          <Text style={styles.sectionHead}>🟣 Transaction Types Explained</Text>
+          <View style={styles.headRow}>
+            <Ionicons name="layers" size={16} color="#6D28D9" />
+            <Text style={styles.sectionHead}>Transaction Types Explained</Text>
+          </View>
           <View style={styles.typeGrid}>
             <View style={styles.typeCard}><Text style={styles.typeEmoji}>💸</Text><Text style={styles.typeTitle}>Expense</Text><Text style={styles.typeBody}>Money going out.</Text></View>
             <View style={styles.typeCard}><Text style={styles.typeEmoji}>💰</Text><Text style={styles.typeTitle}>Income</Text><Text style={styles.typeBody}>Money coming in.</Text></View>
             <View style={styles.typeCard}><Text style={styles.typeEmoji}>🔁</Text><Text style={styles.typeTitle}>Transfer</Text><Text style={styles.typeBody}>Move money between your accounts.</Text></View>
             <View style={styles.typeCard}><Text style={styles.typeEmoji}>🤝</Text><Text style={styles.typeTitle}>Borrow</Text><Text style={styles.typeBody}>Money taken that must be returned.</Text></View>
+            <View style={styles.typeCard}><Text style={styles.typeEmoji}>🗄️</Text><Text style={styles.typeTitle}>Savings</Text><Text style={styles.typeBody}>Deposit, withdraw, or move between goals.</Text></View>
           </View>
         </View>
         ) : null}
@@ -288,6 +305,12 @@ const styles = StyleSheet.create({
     color: "#1F2937",
     fontSize: 14,
     fontFamily: "Sora_700Bold",
+    marginBottom: 8
+  },
+  headRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     marginBottom: 8
   },
   body: {
