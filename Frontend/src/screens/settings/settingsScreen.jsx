@@ -21,6 +21,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import ScreenContainer from "../../components/common/screenContainer";
+import { getThemeLabel, THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 // ─── Mock user state ──────────────────────────────────────────────────────────
 // Replace with real auth context / API data when backend is connected
@@ -33,22 +34,14 @@ const MOCK_USER = {
   theme: "Default Purple",
 };
 
-// ─── Theme options ────────────────────────────────────────────────────────────
-const THEMES = [
-  { id: "default", label: "Default Purple", available: true },
-  { id: "midnight", label: "Midnight Blue", available: false },
-  { id: "forest", label: "Forest Green", available: false },
-  { id: "rose", label: "Rose Gold", available: false },
-];
-
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [balanceHidden, setBalanceHidden] = useState(false);
-  const [themeSheetVisible, setThemeSheetVisible] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState("default");
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
 
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -82,8 +75,7 @@ export default function SettingsScreen() {
   };
 
   // ─── Theme picker ────────────────────────────────────────────────────────
-  const currentThemeLabel =
-    THEMES.find((t) => t.id === selectedTheme)?.label ?? "Default Purple";
+  const currentThemeLabel = getThemeLabel(selectedThemeId);
 
   // ─── Reusable row component ───────────────────────────────────────────────
   const SettingsRow = ({
@@ -94,8 +86,8 @@ export default function SettingsScreen() {
     onPress,
     isLast = false,
     danger = false,
-    iconBg = "#EEEEFF",
-    iconColor = "#5C5CDB",
+    iconBg,
+    iconColor,
   }) => (
     <Pressable
       style={({ pressed }) => [
@@ -106,8 +98,8 @@ export default function SettingsScreen() {
       onPress={onPress}
       android_ripple={{ color: "#F0F0FF" }}
     >
-      <View style={[styles.rowIconBubble, { backgroundColor: iconBg }]}>
-        <Ionicons name={icon} size={18} color={iconColor} />
+      <View style={[styles.rowIconBubble, { backgroundColor: iconBg ?? `${activeTheme.boxColor}1A` }]}>
+        <Ionicons name={icon} size={18} color={iconColor ?? activeTheme.boxColor} />
       </View>
       <View style={styles.rowContent}>
         <Text style={[styles.rowTitle, danger && styles.rowTitleDanger]}>
@@ -132,7 +124,7 @@ export default function SettingsScreen() {
   // ─── Section wrapper ─────────────────────────────────────────────────────
   const Section = ({ title, children }) => (
     <View style={styles.sectionPanel}>
-      <Text style={styles.sectionHeader}>{title}</Text>
+      <Text style={[styles.sectionHeader, { color: activeTheme.boxColor }]}>{title}</Text>
       {children}
     </View>
   );
@@ -140,8 +132,8 @@ export default function SettingsScreen() {
   // ─── Toggle row ──────────────────────────────────────────────────────────
   const ToggleRow = ({ icon, title, subtitle, value, onChange, isLast = false }) => (
     <View style={[styles.row, !isLast && styles.rowBorder]}>
-      <View style={styles.rowIconBubble}>
-        <Ionicons name={icon} size={18} color="#5C5CDB" />
+      <View style={[styles.rowIconBubble, { backgroundColor: `${activeTheme.boxColor}1A` }]}>
+        <Ionicons name={icon} size={18} color={activeTheme.boxColor} />
       </View>
       <View style={styles.rowContent}>
         <Text style={styles.rowTitle}>{title}</Text>
@@ -150,7 +142,7 @@ export default function SettingsScreen() {
       <Switch
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: "#E2E8F0", true: "#5C5CDB" }}
+        trackColor={{ false: "#E2E8F0", true: activeTheme.boxColor }}
         thumbColor="#FFFFFF"
         ios_backgroundColor="#E2E8F0"
       />
@@ -158,14 +150,14 @@ export default function SettingsScreen() {
   );
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* ── HERO ──────────────────────────────────────────────────────── */}
         <LinearGradient
-          colors={["#5C5CDB", "#3F2E95"]}
+          colors={[activeTheme.boxColor, activeTheme.supportingAccent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + 12 }]}
@@ -282,7 +274,7 @@ export default function SettingsScreen() {
               title="Change Theme"
               subtitle="Personalise your app appearance"
               rightText={currentThemeLabel}
-              onPress={() => setThemeSheetVisible(true)}
+              onPress={() => router.push("/change-theme")}
               isLast
             />
           </Section>
@@ -399,75 +391,6 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
-      {/* ── THEME PICKER BOTTOM SHEET ─────────────────────────────────────── */}
-      {themeSheetVisible && (
-        <Pressable
-          style={styles.sheetOverlay}
-          onPress={() => setThemeSheetVisible(false)}
-        >
-          <Pressable style={styles.sheetContainer} onPress={() => {}}>
-            <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>Choose Theme</Text>
-            <Text style={styles.sheetSub}>
-              More themes coming soon — only Default is available now.
-            </Text>
-            {THEMES.map((theme) => (
-              <Pressable
-                key={theme.id}
-                style={[
-                  styles.themeRow,
-                  selectedTheme === theme.id && styles.themeRowActive,
-                  !theme.available && styles.themeRowDisabled,
-                ]}
-                onPress={() => {
-                  if (!theme.available) return;
-                  setSelectedTheme(theme.id);
-                  setThemeSheetVisible(false);
-                }}
-                disabled={!theme.available}
-              >
-                <View
-                  style={[
-                    styles.themeColorDot,
-                    {
-                      backgroundColor: theme.available
-                        ? "#5C5CDB"
-                        : "#CBD5E1",
-                    },
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.themeLabel,
-                    !theme.available && styles.themeLabelDisabled,
-                  ]}
-                >
-                  {theme.label}
-                </Text>
-                {!theme.available && (
-                  <View style={styles.comingSoonPill}>
-                    <Text style={styles.comingSoonText}>Coming Soon</Text>
-                  </View>
-                )}
-                {selectedTheme === theme.id && theme.available && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={18}
-                    color="#5C5CDB"
-                    style={{ marginLeft: "auto" }}
-                  />
-                )}
-              </Pressable>
-            ))}
-            <Pressable
-              style={styles.sheetCloseBtn}
-              onPress={() => setThemeSheetVisible(false)}
-            >
-              <Text style={styles.sheetCloseBtnText}>Close</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      )}
     </ScreenContainer>
   );
 }
@@ -800,97 +723,4 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  // ── Theme sheet ──────────────────────────────────────────────────────────
-  sheetOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "flex-end",
-  },
-  sheetContainer: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 36,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: "#E2E8F0",
-    alignSelf: "center",
-    marginBottom: 18,
-  },
-  sheetTitle: {
-    color: "#0F172A",
-    fontSize: 17,
-    fontFamily: "Sora_800ExtraBold",
-    marginBottom: 4,
-  },
-  sheetSub: {
-    color: "#64748B",
-    fontSize: 12,
-    fontFamily: "Sora_500Medium",
-    marginBottom: 16,
-  },
-  themeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    borderRadius: 8,
-    paddingHorizontal: 4,
-  },
-  themeRowActive: {
-    backgroundColor: "#F5F3FF",
-  },
-  themeRowDisabled: {
-    opacity: 0.5,
-  },
-  themeColorDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    marginRight: 12,
-  },
-  themeLabel: {
-    color: "#0F172A",
-    fontSize: 14,
-    fontFamily: "Sora_700Bold",
-    flex: 1,
-  },
-  themeLabelDisabled: {
-    color: "#94A3B8",
-  },
-  comingSoonPill: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginLeft: "auto",
-  },
-  comingSoonText: {
-    color: "#64748B",
-    fontSize: 10,
-    fontFamily: "Sora_600SemiBold",
-  },
-  sheetCloseBtn: {
-    marginTop: 16,
-    backgroundColor: "#F4F4FF",
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#DDE3F4",
-  },
-  sheetCloseBtnText: {
-    color: "#5C5CDB",
-    fontSize: 14,
-    fontFamily: "Sora_700Bold",
-  },
 });
