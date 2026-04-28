@@ -238,13 +238,13 @@ notes: Optional String
 
 These are the savings transaction actions currently being handled in the frontend screens:
 
-| Type                 | Status   | Notes                                                                             |
-| -------------------- | -------- | --------------------------------------------------------------------------------- |
-| `savings_deposit`    | Frontend | Manual deposit into a single goal                                                 |
-| `savings_withdrawal` | Frontend | Manual withdrawal from a single goal                                              |
-| `goal_transfer`      | Frontend | Move money between two goals                                                      |
-| `budget_to_savings`  | Deferred | Move unused budget into savings will be handled from the budget section later     |
-| `savings_split`      | Deferred | Split deposits across multiple goals will be handled in the savings section later |
+| Type                 | Status   | Notes                                                                         |
+| -------------------- | -------- | ----------------------------------------------------------------------------- |
+| `savings_deposit`    | Frontend | Manual deposit into a single goal                                             |
+| `savings_withdrawal` | Frontend | Manual withdrawal from a single goal                                          |
+| `goal_transfer`      | Frontend | Move money between two goals                                                  |
+| `savings_split`      | Frontend | Split one savings plan across multiple goals in the Plan tab                  |
+| `budget_to_savings`  | Deferred | Move unused budget into savings will be handled from the budget section later |
 
 ### Frontend Goal Picker Rules
 
@@ -252,6 +252,9 @@ These are the savings transaction actions currently being handled in the fronten
 - Goal transfer uses two goal selector boxes.
 - Source and target goals cannot be the same.
 - The target goal selector hides the currently selected source goal.
+- Savings split starts with a count picker in the Plan tab, then shows one row per selected goal.
+- Split percentages are capped so the total never exceeds 100%.
+- Premium users can activate extra goals and then add more split rows manually.
 
 ---
 
