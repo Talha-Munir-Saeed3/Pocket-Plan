@@ -158,6 +158,8 @@ export default function AddTransactionScreen() {
   const [type, setType] = useState("Expense");
   const [selectedCategory, setSelectedCategory] = useState("food");
   const [amount, setAmount] = useState("");
+  const [title, setTitle] = useState("");
+  const [titleError, setTitleError] = useState("");
   const [selectedDate, setSelectedDate] = useState(startOfDay(now));
   const [description, setDescription] = useState("");
   const [dateError, setDateError] = useState("");
@@ -189,6 +191,11 @@ export default function AddTransactionScreen() {
   };
 
   const saveTransaction = () => {
+    if (!String(title ?? "").trim()) {
+      setTitleError("Title is required");
+      return;
+    }
+    setTitleError("");
     if (selectedDate < minAllowedDate || selectedDate > maxAllowedDate) {
       setDateError(
         `Allowed range is ${formatDateChip(minAllowedDate)} to ${formatDateChip(maxAllowedDate)}${graceEnabled ? " (grace enabled)" : ""}.`
@@ -257,6 +264,17 @@ export default function AddTransactionScreen() {
             <Text style={styles.inlineHintLabel}>Selected Type</Text>
             <Text style={styles.inlineHintValue}>{type}</Text>
           </View>
+          <InputField
+            label="Title"
+            placeholder="e.g., Grocery shopping"
+            value={title}
+            onChangeText={(text) => {
+              setTitle(text);
+              if (String(text ?? "").trim()) setTitleError("");
+            }}
+          />
+          {titleError ? <Text style={styles.errorText}>{titleError}</Text> : null}
+
           <InputField
             label="Amount"
             placeholder="PKR 0"
