@@ -13,6 +13,7 @@ export default function ThemeSelectionScreen() {
   const insets = useSafeAreaInsets();
   const selectedTheme = useThemeStore((state) => state.selectedThemeId);
   const setSelectedTheme = useThemeStore((state) => state.setSelectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedTheme) ?? THEME_OPTIONS[0];
 
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -26,20 +27,20 @@ export default function ThemeSelectionScreen() {
   return (
     <ScreenContainer style={styles.screen} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.hero, { paddingTop: insets.top + 12 }]}>
+        <LinearGradient colors={[activeTheme.boxColor, activeTheme.supportingAccent]} style={[styles.hero, { paddingTop: insets.top + 12 }]}>
           <View style={styles.heroTopRow}>
             <View>
               <Text style={styles.heroKicker}>Settings</Text>
               <Text style={styles.heroTitle}>Change Theme</Text>
             </View>
-            <Pressable style={styles.backButton} onPress={() => router.back()}>
+            <Pressable style={[styles.backButton, { borderColor: "rgba(255,255,255,0.35)", backgroundColor: "rgba(255,255,255,0.16)" }]} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={16} color="#FFFFFF" />
             </Pressable>
           </View>
           <Text style={styles.heroSub}>Themes from frontend documentation with text previews for each background.</Text>
         </LinearGradient>
 
-        <View style={styles.body}>
+        <View style={[styles.body, { backgroundColor: activeTheme.backgroundColor }]}>
           <View style={styles.themeGrid}>
           {THEME_OPTIONS.map((theme) => (
             <Pressable
@@ -162,7 +163,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.16)"
   },
   body: {
-    gap: 12
+    gap: 12,
+    borderRadius: 18,
+    paddingTop: 2
   },
   themeGrid: {
     flexDirection: "row",
