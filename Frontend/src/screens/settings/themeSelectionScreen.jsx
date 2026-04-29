@@ -48,27 +48,50 @@ export default function ThemeSelectionScreen() {
               onPress={() => setSelectedTheme(theme.id)}
             >
               <View style={[styles.themePreview, { backgroundColor: theme.backgroundColor }]}>
-                <View style={[styles.previewHeader, { backgroundColor: theme.boxColor }]}>
-                  <Text style={styles.previewHeaderText}>Pocket Plan</Text>
-                </View>
-
-                <View style={styles.previewTextToneRow}>
-                  <View style={styles.previewAChip}>
-                    <Text style={[styles.previewAChar, { color: theme.textColor }]}>A</Text>
+                <View style={[styles.phoneShell, { backgroundColor: theme.backgroundColor, borderColor: `${theme.boxColor}22` }]}>
+                  <View style={[styles.phoneTopStrip, { backgroundColor: theme.boxColor }]}>
+                    <View style={styles.phoneStatusDots}>
+                      <View style={[styles.phoneStatusDot, { backgroundColor: "rgba(255,255,255,0.75)" }]} />
+                      <View style={[styles.phoneStatusDot, { backgroundColor: "rgba(255,255,255,0.5)" }]} />
+                    </View>
+                    <Text style={styles.phoneTopTitle}>Pocket Plan</Text>
                   </View>
-                  <Text style={[styles.previewToneLabel, { color: theme.textColor }]}>Text Color</Text>
-                </View>
 
-                <Text style={[styles.previewMainText, { color: theme.textColor }]}>Primary text on this background</Text>
-                <Text style={[styles.previewSubText, { color: theme.textColor }]}>Monthly Saving: PKR 12,000</Text>
+                  <View style={styles.phoneBody}>
+                    <View style={styles.phoneHeroRow}>
+                      <View style={[styles.previewAChip, { borderColor: theme.supportingAccent, backgroundColor: `${theme.supportingAccent}12` }]}>
+                        <Text style={[styles.previewAChar, { color: theme.supportingAccent }]}>A</Text>
+                      </View>
+                      <View style={styles.phoneHeroCopy}>
+                        <Text style={[styles.phoneHeroTitle, { color: theme.textColor }]}>Daily overview</Text>
+                        <Text style={[styles.phoneHeroSub, { color: theme.textColor }]}>Header, content, and navigation</Text>
+                      </View>
+                    </View>
 
-                <View style={styles.previewTokenRow}>
-                  <View style={[styles.tokenDot, { backgroundColor: theme.boxColor }]} />
-                  <Text style={[styles.previewTokenText, { color: theme.textColor }]}>Box: {theme.boxColor}</Text>
-                </View>
-                <View style={styles.previewTokenRow}>
-                  <View style={[styles.tokenDot, { backgroundColor: theme.supportingAccent }]} />
-                  <Text style={[styles.previewTokenText, { color: theme.textColor }]}>Text: {theme.textColor}</Text>
+                    <View style={styles.phoneMetricCard}>
+                      <View style={[styles.phoneMetricBar, { backgroundColor: theme.boxColor }]} />
+                      <Text style={[styles.phoneMetricTitle, { color: theme.textColor }]}>Monthly Saving</Text>
+                      <Text style={[styles.phoneMetricValue, { color: theme.supportingAccent }]}>PKR 12,000</Text>
+                    </View>
+
+                    <View style={styles.phoneListCard}>
+                      <View style={styles.phoneListRow}>
+                        <View style={[styles.phoneListBullet, { backgroundColor: theme.boxColor }]} />
+                        <Text style={[styles.phoneListText, { color: theme.textColor }]}>Budget card preview</Text>
+                      </View>
+                      <View style={styles.phoneListRow}>
+                        <View style={[styles.phoneListBullet, { backgroundColor: theme.supportingAccent }]} />
+                        <Text style={[styles.phoneListText, { color: theme.textColor }]}>Savings goal preview</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.phoneNavBar}>
+                      <View style={[styles.phoneNavItem, { backgroundColor: theme.boxColor }]} />
+                      <View style={styles.phoneNavItem} />
+                      <View style={styles.phoneNavItem} />
+                      <View style={styles.phoneNavItem} />
+                    </View>
+                  </View>
                 </View>
               </View>
 
@@ -145,7 +168,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: 12
+    rowGap: 12,
+    columnGap: 0
   },
   themeCard: {
     backgroundColor: "#FFFFFF",
@@ -164,70 +188,131 @@ const styles = StyleSheet.create({
     elevation: 3
   },
   themePreview: {
-    height: 146,
-    padding: 12,
+    height: 198,
+    padding: 10,
     justifyContent: "space-between"
   },
-  previewHeader: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    alignSelf: "flex-start"
+  phoneBody: {
+    flex: 1,
+    padding: 8,
+    justifyContent: "space-between"
   },
-  previewHeaderText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontFamily: "Sora_700Bold"
-  },
-  previewMainText: {
-    marginTop: 2,
-    fontSize: 11,
-    fontFamily: "Sora_700Bold"
-  },
-  previewSubText: {
-    marginTop: 2,
-    fontSize: 10,
-    fontFamily: "Sora_500Medium",
-    opacity: 0.85
-  },
-  previewTextToneRow: {
+  phoneHeroRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 8
+    gap: 8
+  },
+  phoneHeroCopy: {
+    flex: 1
+  },
+  phoneHeroTitle: {
+    fontSize: 11,
+    fontFamily: "Sora_700Bold"
+  },
+  phoneHeroSub: {
+    marginTop: 2,
+    fontSize: 9,
+    fontFamily: "Sora_500Medium"
+  },
+  phoneShell: {
+    flex: 1,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 8,
+    overflow: "hidden"
+  },
+  phoneTopStrip: {
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 7,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  phoneStatusDots: {
+    flexDirection: "row",
+    gap: 4
+  },
+  phoneStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 99
+  },
+  phoneTopTitle: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontFamily: "Sora_700Bold"
   },
   previewAChip: {
-    width: 20,
-    height: 20,
+    width: 26,
+    height: 26,
     borderRadius: 999,
     backgroundColor: "rgba(255,255,255,0.88)",
     borderWidth: 1,
-    borderColor: "rgba(15,23,42,0.14)",
     alignItems: "center",
     justifyContent: "center"
   },
   previewAChar: {
+    fontSize: 14,
+    fontFamily: "Sora_800ExtraBold"
+  },
+  phoneMetricCard: {
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.54)",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "rgba(15,23,42,0.08)",
+    marginTop: 10
+  },
+  phoneMetricBar: {
+    height: 6,
+    borderRadius: 99,
+    marginBottom: 8
+  },
+  phoneMetricTitle: {
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold"
+  },
+  phoneMetricValue: {
+    marginTop: 3,
     fontSize: 12,
     fontFamily: "Sora_800ExtraBold"
   },
-  previewToneLabel: {
-    fontSize: 9,
-    fontFamily: "Sora_700Bold"
+  phoneListCard: {
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.58)",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "rgba(15,23,42,0.08)",
+    marginTop: 8,
+    gap: 7
   },
-  previewTokenRow: {
+  phoneListRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 3
+    gap: 8
   },
-  tokenDot: {
+  phoneListBullet: {
     width: 8,
     height: 8,
     borderRadius: 99
   },
-  previewTokenText: {
+  phoneListText: {
     fontSize: 9,
     fontFamily: "Sora_600SemiBold"
+  },
+  phoneNavBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 6,
+    paddingTop: 10
+  },
+  phoneNavItem: {
+    width: 22,
+    height: 4,
+    borderRadius: 99,
+    backgroundColor: "rgba(15,23,42,0.12)"
   },
   themeMetaRow: {
     flexDirection: "row",
