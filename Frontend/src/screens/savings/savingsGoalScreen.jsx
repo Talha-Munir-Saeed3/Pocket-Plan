@@ -75,11 +75,15 @@ export default function SavingsGoalScreen() {
   const [draftGoalName, setDraftGoalName] = useState(goalName);
   const [draftTargetAmount, setDraftTargetAmount] = useState(targetAmount);
   const [draftMonthlyContribution, setDraftMonthlyContribution] = useState(monthlyContribution);
+  const [draftIsActive, setDraftIsActive] = useState(true);
+  const [draftIsPrimary, setDraftIsPrimary] = useState(true);
   const [showOverallPercent, setShowOverallPercent] = useState(false);
   const [showMonthlyPercent, setShowMonthlyPercent] = useState(false);
   const [isCreatingNewGoal, setIsCreatingNewGoal] = useState(false);
+  const [editingGoalId, setEditingGoalId] = useState(null);
+  const [activeGoalId, setActiveGoalId] = useState(() => `user-${Date.now()}`);
   const [goals, setGoals] = useState([
-    { id: `user-${Date.now()}`, name: goalName, target: String(targetAmount), monthly: String(monthlyContribution) }
+    { id: activeGoalId, name: goalName, target: String(targetAmount), monthly: String(monthlyContribution), createdAt: new Date().toISOString(), isPrimary: true, isActive: true }
   ]);
   const [splitGoals, setSplitGoals] = useState(() => createSplitGoals(2, [
     { id: "split-1", goalId: "emergency", percentage: "50", isPrimary: true },
@@ -96,9 +100,10 @@ export default function SavingsGoalScreen() {
     Sora_800ExtraBold
   });
 
-  const targetValue = Number(targetAmount) || 0;
+  const activeGoal = goals.find((goal) => goal.id === activeGoalId) ?? goals[0];
+  const targetValue = Number(activeGoal?.target ?? targetAmount) || 0;
   const savedValue = Number(savedAmount) || 0;
-  const monthlyValue = Number(monthlyContribution) || 0;
+  const monthlyValue = Number(activeGoal?.monthly ?? monthlyContribution) || 0;
   const remaining = Math.max(0, targetValue - savedValue);
   const progress = targetValue > 0 ? Math.round((savedValue / targetValue) * 100) : 0;
   const monthsToGoal = monthlyValue > 0 ? Math.ceil(remaining / monthlyValue) : 0;
@@ -132,18 +137,25 @@ export default function SavingsGoalScreen() {
     []
   );
 
-  const openEditSheet = () => {
-    setDraftGoalName(goalName);
-    setDraftTargetAmount(targetAmount);
-    setDraftMonthlyContribution(monthlyContribution);
+  const openEditSheet = (goal = activeGoal ?? goals[0]) => {
+    setEditingGoalId(goal?.id ?? null);
+    setDraftGoalName(goal?.name ?? goalName);
+    setDraftTargetAmount(goal?.target ?? targetAmount);
+    setDraftMonthlyContribution(goal?.monthly ?? monthlyContribution);
+    setDraftIsActive(Boolean(goal?.isActive ?? true));
+    setDraftIsPrimary(Boolean(goal?.isPrimary ?? false));
+    setIsCreatingNewGoal(false);
     setIsSheetOpen(true);
   };
 
   const createNewGoal = () => {
     // prepare empty drafts for a new saving plan
+    setEditingGoalId(null);
     setDraftGoalName("");
     setDraftTargetAmount("0");
     setDraftMonthlyContribution("0");
+    setDraftIsActive(false);
+    setDraftIsPrimary(false);
     setIsCreatingNewGoal(true);
     setIsSheetOpen(true);
   };
@@ -152,18 +164,74 @@ export default function SavingsGoalScreen() {
     const name = draftGoalName.trim() || "New Goal";
     const target = sanitizeNumber(draftTargetAmount) || "0";
     const monthly = sanitizeNumber(draftMonthlyContribution) || "0";
+    const createdAt = new Date().toISOString();
 
     if (isCreatingNewGoal) {
-      // create a new user goal and add it to the goals list
-      const newGoal = { id: `user-${Date.now()}`, name, target: String(target), monthly: String(monthly) };
-      setGoals((current) => [...current, newGoal]);
-      // Do NOT switch the main displayed goal — keep the existing goal visible
+      const hasPrimary = goals.some((goal) => goal.isPrimary);
+      const nextIsPrimary = draftIsPrimary || !hasPrimary;
+      const nextIsActive = draftIsActive || nextIsPrimary;
+      const newGoal = {
+        id: `user-${Date.now()}`,
+        name,
+        target: String(target),
+        monthly: String(monthly),
+        createdAt,
+        isPrimary: nextIsPrimary,
+        isActive: nextIsActive
+      };
+      setGoals((current) => {
+        const nextGoals = nextIsPrimary ? current.map((goal) => ({ ...goal, isPrimary: false })) : current.map((goal) => ({ ...goal }));
+        const normalizedNewGoal = {
+          ...newGoal,
+          isPrimary: nextIsPrimary,
+          isActive: nextIsActive
+        };
+        return [...nextGoals, normalizedNewGoal];
+      });
       setIsCreatingNewGoal(false);
+      if (newGoal.isActive) setActiveGoalId(newGoal.id);
+      setGoalName(newGoal.name);
+      setTargetAmount(newGoal.target);
+      setMonthlyContribution(newGoal.monthly);
     } else {
-      // editing existing main goal
+      const currentGoalId = editingGoalId ?? activeGoal?.id ?? goals[0]?.id ?? activeGoalId;
+      setGoals((current) => {
+        const otherGoals = current.filter((goal) => goal.id !== currentGoalId);
+        const nextPrimaryId = draftIsPrimary
+          ? currentGoalId
+          : otherGoals.find((goal) => goal.isPrimary && goal.isActive)?.id
+            ?? otherGoals.find((goal) => goal.isPrimary)?.id
+            ?? otherGoals.find((goal) => goal.isActive)?.id
+            ?? currentGoalId;
+        const nextActiveState = draftIsPrimary ? true : draftIsActive;
+
+        return current.map((goal) => {
+          if (goal.id === currentGoalId) {
+            return {
+              ...goal,
+              name,
+              target: String(target),
+              monthly: String(monthly),
+              isPrimary: nextPrimaryId === currentGoalId,
+              isActive: nextActiveState
+            };
+          }
+
+          return {
+            ...goal,
+            isPrimary: goal.id === nextPrimaryId
+          };
+        });
+      });
       setGoalName(name || "New Laptop");
       setTargetAmount(target);
       setMonthlyContribution(monthly);
+      if (draftIsActive || draftIsPrimary) {
+        setActiveGoalId(currentGoalId);
+      } else {
+        const fallbackGoal = goals.find((goal) => goal.id !== currentGoalId && goal.isActive) ?? goals.find((goal) => goal.id !== currentGoalId);
+        if (fallbackGoal) setActiveGoalId(fallbackGoal.id);
+      }
     }
 
     setIsSheetOpen(false);
@@ -201,27 +269,6 @@ export default function SavingsGoalScreen() {
     });
   };
 
-  const addSplitGoal = () => {
-    if (!isPremium) return;
-    setSplitGoals((current) => {
-      if (current.length >= MAX_SPLIT_GOALS) return current;
-      const nextGoalId = availableGoals.find((goal) => !current.some((item) => item.goalId === goal.id))?.id || availableGoals[0].id;
-      const nextIndex = current.length;
-
-      setSplitGoalPickerIndex(nextIndex);
-
-      return [
-        ...current,
-        {
-          id: `split-${current.length + 1}`,
-          goalId: nextGoalId,
-          percentage: "0",
-          isPrimary: false
-        }
-      ];
-    });
-  };
-
   const removeSplitGoal = (index) => {
     setSplitGoals((current) => {
       if (current.length <= 1) return current;
@@ -236,6 +283,24 @@ export default function SavingsGoalScreen() {
     setSplitGoals((current) => {
       if (!current.length) return current;
       return rebalanceSplitGoals(current);
+    });
+  };
+
+  const addSplitGoal = () => {
+    if (!isPremium) return;
+    setSplitGoals((current) => {
+      if (current.length >= MAX_SPLIT_GOALS) return current;
+      const nextGoalId = availableGoals.find((goal) => !current.some((item) => item.goalId === goal.id))?.id || availableGoals[0].id;
+
+      return [
+        ...current,
+        {
+          id: `split-${current.length + 1}`,
+          goalId: nextGoalId,
+          percentage: "0",
+          isPrimary: false
+        }
+      ];
     });
   };
 
@@ -362,37 +427,58 @@ export default function SavingsGoalScreen() {
           <>
             <View style={styles.card}>
               <View style={styles.cardHeadRow}>
-                <Text style={styles.sectionTitle}>Savings Plan</Text>
-                <Pressable style={styles.editBtn} onPress={openEditSheet}>
-                  <Text style={styles.editBtnText}>Adjust</Text>
-                </Pressable>
+                <Text style={styles.sectionTitle}>Goal Setup</Text>
               </View>
 
-              <View style={styles.setupRow}>
-                <Text style={styles.setupLabel}>Goal Name</Text>
-                <Text style={styles.setupValue}>{goalName}</Text>
+              <Text style={styles.goalSetupText}>Create saving goals below.</Text>
+
+              <View style={styles.goalCardList}>
+                {goals.map((goal, index) => {
+                  const isPrimaryGoal = Boolean(goal.isPrimary);
+                  const isActiveGoal = Boolean(goal.isActive);
+                  const createdDate = new Date(goal.createdAt || Date.now());
+                  const createdLabel = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(createdDate);
+                  const createdMonthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(createdDate);
+                  return (
+                    <View
+                      key={goal.id}
+                      style={[
+                        styles.goalCard,
+                        isPrimaryGoal && styles.goalCardPrimary,
+                        isActiveGoal && styles.goalCardActive,
+                        isPrimaryGoal && isActiveGoal && styles.goalCardPrimaryActive
+                      ]}
+                    >
+                      <View style={styles.goalCardTopRow}>
+                        <View style={styles.goalCardTopCopy}>
+                          <Text style={styles.goalCardLabel}>{isPrimaryGoal ? "Primary Goal" : `Goal ${index + 1}`}</Text>
+                          <Text style={styles.goalCardName}>{goal.name}</Text>
+                          <Text style={styles.goalCardDate}>{createdMonthLabel} · {createdLabel}</Text>
+                        </View>
+                        <Pressable style={styles.goalCardEditBtn} onPress={() => openEditSheet(goal)}>
+                          <Ionicons name="create-outline" size={12} color="#2E2FA8" />
+                          <Text style={styles.goalCardEditBtnText}>Edit</Text>
+                        </Pressable>
+                      </View>
+
+                      <View style={styles.goalCardStats}>
+                        <View style={styles.goalCardStatItem}>
+                          <Text style={styles.goalCardStatLabel}>Target</Text>
+                          <Text style={styles.goalCardStatValue}>{toCurrency(goal.target)}</Text>
+                        </View>
+                        <View style={styles.goalCardStatItem}>
+                          <Text style={styles.goalCardStatLabel}>Monthly</Text>
+                          <Text style={styles.goalCardStatValue}>{toCurrency(goal.monthly)}</Text>
+                        </View>
+                      </View>
+
+                      <Text style={styles.goalCardActiveHint}>{isActiveGoal ? "Active goal" : "Inactive"}</Text>
+                    </View>
+                  );
+                })}
               </View>
 
-              <View style={styles.setupRow}>
-                <Text style={styles.setupLabel}>Total Target</Text>
-                <Text style={styles.setupValue}>{toCurrency(targetValue)}</Text>
-              </View>
-
-              <View style={styles.setupRow}>
-                <Text style={styles.setupLabel}>Monthly Saving</Text>
-                <Text style={styles.setupValue}>{toCurrency(monthlyValue)}</Text>
-              </View>
-
-              <View style={styles.setupRow}>
-                <Text style={styles.setupLabel}>Started</Text>
-                <Text style={styles.setupValue}>{startedLabel}</Text>
-              </View>
-
-              <PrimaryButton
-                label="Add Saving Plan"
-                style={styles.planActionButton}
-                onPress={createNewGoal}
-              />
+              <PrimaryButton label="Add Saving Plan" style={styles.planActionButton} onPress={createNewGoal} />
             </View>
 
             <View style={styles.card}>
@@ -529,6 +615,40 @@ export default function SavingsGoalScreen() {
               keyboardType="number-pad"
               style={styles.sheetInput}
             />
+
+            <View style={styles.sheetToggleGroup}>
+              <View style={styles.sheetToggleRow}>
+                <View style={styles.sheetToggleCopy}>
+                  <Text style={styles.sheetToggleTitle}>Set as Active</Text>
+                  <Text style={styles.sheetToggleText}>More than one goal can stay active.</Text>
+                </View>
+                <Pressable
+                  style={[styles.sheetToggle, draftIsActive && styles.sheetToggleActive]}
+                  onPress={() => setDraftIsActive((current) => (draftIsPrimary ? true : !current))}
+                >
+                  <View style={[styles.sheetToggleKnob, draftIsActive && styles.sheetToggleKnobActive]} />
+                </Pressable>
+              </View>
+
+              <View style={styles.sheetToggleRow}>
+                <View style={styles.sheetToggleCopy}>
+                  <Text style={styles.sheetToggleTitle}>Make Primary</Text>
+                  <Text style={styles.sheetToggleText}>Primary goal shows first in the plan card.</Text>
+                </View>
+                <Pressable
+                  style={[styles.sheetToggle, draftIsPrimary && styles.sheetToggleActive]}
+                  onPress={() => {
+                    setDraftIsPrimary((current) => {
+                      const nextValue = !current;
+                      if (nextValue) setDraftIsActive(true);
+                      return nextValue;
+                    });
+                  }}
+                >
+                  <View style={[styles.sheetToggleKnob, draftIsPrimary && styles.sheetToggleKnobActive]} />
+                </Pressable>
+              </View>
+            </View>
 
             <View style={styles.sheetActions}>
               <Pressable style={[styles.sheetBtn, styles.sheetBtnGhost]} onPress={() => setIsSheetOpen(false)}>
@@ -835,45 +955,128 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6
   },
-  editBtn: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#D7DEFF",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    backgroundColor: "#F8FAFF"
-  },
-  editBtnText: {
-    color: "#2E2FA8",
-    fontSize: 12,
-    fontFamily: "Sora_700Bold"
-  },
   planActionButton: {
     marginTop: 14
   },
-  setupRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E6EBFB",
-    paddingVertical: 10,
-    gap: 12
-  },
-  setupRowLast: {
-    borderBottomWidth: 0
-  },
-  setupLabel: {
-    flex: 1,
+  goalSetupText: {
     color: "#64748B",
     fontSize: 12,
+    lineHeight: 18,
+    fontFamily: "Sora_500Medium",
+    marginBottom: 12
+  },
+  goalCardList: {
+    gap: 10
+  },
+  goalCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DDE3F4",
+    backgroundColor: "#F8FAFF",
+    padding: 12
+  },
+  goalCardPrimary: {
+    borderColor: "#D7B7FF",
+    backgroundColor: "#F4F4FF"
+  },
+  goalCardActive: {
+    borderColor: "#5C5CDB",
+    shadowColor: "#2E2FA8",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2
+  },
+  goalCardPrimaryActive: {
+    borderColor: "#7C3AED",
+    backgroundColor: "#F7F1FF"
+  },
+  goalCardTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 10
+  },
+  goalCardTopCopy: {
+    flex: 1
+  },
+  goalCardLabel: {
+    color: "#64748B",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.4
+  },
+  goalCardName: {
+    marginTop: 3,
+    color: "#0F172A",
+    fontSize: 14,
+    fontFamily: "Sora_700Bold"
+  },
+  goalCardDate: {
+    marginTop: 4,
+    color: "#64748B",
+    fontSize: 10,
+    fontFamily: "Sora_500Medium"
+  },
+  goalCardPill: {
+    borderRadius: 999,
+    backgroundColor: "#EEF0FF",
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    paddingHorizontal: 9,
+    paddingVertical: 4
+  },
+  goalCardPillText: {
+    color: "#2E2FA8",
+    fontSize: 10,
+    fontFamily: "Sora_700Bold"
+  },
+  goalCardEditBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#D7DEFF",
+    backgroundColor: "#F8FAFF",
+    paddingHorizontal: 9,
+    paddingVertical: 4
+  },
+  goalCardEditBtnText: {
+    color: "#2E2FA8",
+    fontSize: 10,
+    fontFamily: "Sora_700Bold"
+  },
+  goalCardStats: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12
+  },
+  goalCardActiveHint: {
+    marginTop: 10,
+    color: "#64748B",
+    fontSize: 10,
     fontFamily: "Sora_600SemiBold"
   },
-  setupValue: {
+  goalCardStatItem: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E6EBFB",
+    padding: 10
+  },
+  goalCardStatLabel: {
+    color: "#64748B",
+    fontSize: 10,
+    fontFamily: "Sora_600SemiBold"
+  },
+  goalCardStatValue: {
+    marginTop: 4,
     color: "#0F172A",
-    fontSize: 13,
-    fontFamily: "Sora_700Bold",
-    textAlign: "right"
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
   },
   premiumCard: {
     backgroundColor: "#FFFFFF",
@@ -1265,11 +1468,63 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     marginBottom: 10
   },
+  sheetToggleGroup: {
+    gap: 12,
+    marginTop: 10
+  },
+  sheetToggleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E6EBFB",
+    backgroundColor: "#FBFCFF",
+    padding: 12
+  },
+  sheetToggleCopy: {
+    flex: 1
+  },
+  sheetToggleTitle: {
+    color: "#1F2937",
+    fontSize: 12,
+    fontFamily: "Sora_700Bold"
+  },
+  sheetToggleText: {
+    marginTop: 3,
+    color: "#64748B",
+    fontSize: 11,
+    lineHeight: 16,
+    fontFamily: "Sora_500Medium"
+  },
+  sheetToggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 999,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    flexShrink: 0
+  },
+  sheetToggleActive: {
+    backgroundColor: "#5C5CDB"
+  },
+  sheetToggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    transform: [{ translateX: 0 }]
+  },
+  sheetToggleKnobActive: {
+    transform: [{ translateX: 19 }]
+  },
   sheetActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
     gap: 8,
-    marginTop: 2
+    marginTop: 14
   },
   sheetBtn: {
     borderRadius: 9,
