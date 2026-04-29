@@ -92,8 +92,9 @@ export default function SettingsScreen() {
     <Pressable
       style={({ pressed }) => [
         styles.row,
+        { borderBottomColor: `${activeTheme.boxColor}12` },
         !isLast && styles.rowBorder,
-        pressed && styles.rowPressed,
+        pressed && { backgroundColor: `${activeTheme.boxColor}08`, borderRadius: 10 },
       ]}
       onPress={onPress}
       android_ripple={{ color: "#F0F0FF" }}
@@ -123,7 +124,7 @@ export default function SettingsScreen() {
 
   // ─── Section wrapper ─────────────────────────────────────────────────────
   const Section = ({ title, children }) => (
-    <View style={styles.sectionPanel}>
+    <View style={[styles.sectionPanel, { backgroundColor: activeTheme.backgroundColor, borderColor: `${activeTheme.boxColor}22` }]}>
       <Text style={[styles.sectionHeader, { color: activeTheme.boxColor }]}>{title}</Text>
       {children}
     </View>
@@ -286,24 +287,24 @@ export default function SettingsScreen() {
               title="App Lock"
               subtitle="Biometric or PIN protection"
               onPress={() => router.push("/app-lock")}
-              iconBg="#EEF2FF"
-              iconColor="#4338CA"
+              iconBg={`${activeTheme.boxColor}1A`}
+              iconColor={activeTheme.boxColor}
             />
             <SettingsRow
               icon="finger-print"
               title="Biometric Login"
               subtitle="Use fingerprint or Face ID"
               onPress={() => router.push("/biometric")}
-              iconBg="#EEF2FF"
-              iconColor="#4338CA"
+              iconBg={`${activeTheme.supportingAccent}1A`}
+              iconColor={activeTheme.supportingAccent}
             />
             <SettingsRow
               icon="document-text-outline"
               title="Privacy Policy"
               subtitle="How we use your data"
               onPress={() => router.push("/privacy-policy")}
-              iconBg="#EEF2FF"
-              iconColor="#4338CA"
+              iconBg={`${activeTheme.boxColor}1A`}
+              iconColor={activeTheme.boxColor}
               isLast
             />
           </Section>
@@ -315,16 +316,16 @@ export default function SettingsScreen() {
               title="Contact Us"
               subtitle="Get help from our team"
               onPress={() => router.push("/contact")}
-              iconBg="#F0FDF4"
-              iconColor="#16A34A"
+              iconBg={`${activeTheme.supportingAccent}1A`}
+              iconColor={activeTheme.supportingAccent}
             />
             <SettingsRow
               icon="help-circle-outline"
               title="Help & FAQ"
               subtitle="Common questions answered"
               onPress={() => router.push("/faq")}
-              iconBg="#F0FDF4"
-              iconColor="#16A34A"
+              iconBg={`${activeTheme.supportingAccent}1A`}
+              iconColor={activeTheme.supportingAccent}
             />
             <SettingsRow
               icon="star-outline"
@@ -334,8 +335,8 @@ export default function SettingsScreen() {
                 // TODO: open app store rating
                 Alert.alert("Thank you!", "Redirecting to the app store...");
               }}
-              iconBg="#F0FDF4"
-              iconColor="#16A34A"
+              iconBg={`${activeTheme.supportingAccent}1A`}
+              iconColor={activeTheme.supportingAccent}
               isLast
             />
           </Section>
@@ -589,10 +590,6 @@ const styles = StyleSheet.create({
   rowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: "#F1F5F9",
-  },
-  rowPressed: {
-    backgroundColor: "#F8F8FF",
-    borderRadius: 10,
   },
   rowIconBubble: {
     width: 36,
