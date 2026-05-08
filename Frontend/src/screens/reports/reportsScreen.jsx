@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -340,6 +340,12 @@ export default function ReportsScreen() {
                     </View>
                   </View>
                 </View>
+                <Pressable
+                  style={[styles.generateBtn, { backgroundColor: activeTheme.boxColor }]}
+                  onPress={() => Alert.alert("Generate Insights", "Generating insights...")}
+                >
+                  <Text style={styles.generateBtnText}>Generate Insights</Text>
+                </Pressable>
               </View>
             )}
           </View>
@@ -824,6 +830,17 @@ const styles = StyleSheet.create({
   insightPillText: {
     color: "#3730A3",
     fontSize: 11,
+    fontFamily: "Sora_700Bold"
+  }
+  ,
+  generateBtn: {
+    marginTop: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center"
+  },
+  generateBtnText: {
+    color: "#FFFFFF",
     fontFamily: "Sora_700Bold"
   }
 });
