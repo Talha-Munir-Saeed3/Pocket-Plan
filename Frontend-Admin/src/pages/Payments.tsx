@@ -81,6 +81,16 @@ export const Payments: React.FC = () => {
     }
   };
 
+  const getStatusTextColor = (status: string) => {
+    // Ensure good contrast: use dark text on yellow (pending), white on others
+    switch (status) {
+      case "pending":
+        return "#1f2937"; // dark slate
+      default:
+        return "#ffffff";
+    }
+  };
+
   const filteredPayments =
     filterStatus === "all"
       ? payments
@@ -188,7 +198,7 @@ export const Payments: React.FC = () => {
                       className="status-badge"
                       style={{
                         backgroundColor: getStatusColor(payment.status),
-                        color: "white",
+                        color: getStatusTextColor(payment.status),
                       }}
                     >
                       {payment.status}
