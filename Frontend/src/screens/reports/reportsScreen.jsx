@@ -7,6 +7,7 @@ import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800Extra
 import { Ionicons } from "@expo/vector-icons";
 
 import ScreenContainer from "../../components/common/screenContainer";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 const CATEGORY_COLORS = {
   Rent: "#4F46E5",
@@ -46,6 +47,8 @@ const CHART_OPTION_META = {
 export default function ReportsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const [period, setPeriod] = useState("Month");
   const [chartType, setChartType] = useState("Category Bars");
   const [chartMenuOpen, setChartMenuOpen] = useState(false);
@@ -118,10 +121,10 @@ export default function ReportsScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient
-          colors={["#5C5CDB", "#3F2E95"]}
+          colors={[activeTheme.boxColor, activeTheme.supportingAccent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + 12 }]}

@@ -7,6 +7,7 @@ import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800Extra
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 const CATEGORY_LIBRARY = [
   { key: "rent", label: "Rent", emoji: "🏠", weight: 0.28, spent: 25000 },
@@ -59,6 +60,8 @@ const getUsageLabel = (usagePercent) => {
 export default function BudgetScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const bulkUpdateRef = useRef(false);
   const [activeView, setActiveView] = useState("overview");
   const [monthlyBudget, setMonthlyBudget] = useState("75000");
@@ -300,9 +303,9 @@ export default function BudgetScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
+        <LinearGradient colors={[activeTheme.boxColor, activeTheme.supportingAccent]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
           <View style={styles.heroTopRow}>
             <Text style={styles.heroTitle}>Budget Planner</Text>
             <Pressable style={styles.headerHelpButton} onPress={() => router.push(`/budget-help?section=${activeView}`)}>

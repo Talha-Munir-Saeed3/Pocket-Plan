@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import ScreenContainer from "../../components/common/screenContainer";
 import PrimaryButton from "../../components/common/primaryButton";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 const sanitizeNumber = (value) => value.replace(/[^0-9]/g, "");
 const toCurrency = (value) => `PKR ${Math.max(0, Number(value) || 0).toLocaleString()}`;
@@ -66,6 +67,8 @@ const createSplitGoals = (count, sourceGoals = []) => {
 export default function SavingsGoalScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const [activeView, setActiveView] = useState("overview");
   const [goalName, setGoalName] = useState("New Laptop");
   const [targetAmount, setTargetAmount] = useState("150000");
@@ -114,6 +117,13 @@ export default function SavingsGoalScreen() {
   const splitTotal = splitGoals.reduce((sum, item) => sum + (Number(item.percentage) || 0), 0);
   const splitRemaining = Math.max(0, 100 - splitTotal);
   const isPremium = true;
+  const overallFillAnim = useRef(new Animated.Value(0)).current;
+  const monthlyFillAnim = useRef(new Animated.Value(0)).current;
+  const overallBubbleAnim = useRef(new Animated.Value(0)).current;
+  const monthlyBubbleAnim = useRef(new Animated.Value(0)).current;
+  const splitToggleAnim = useRef(new Animated.Value(0)).current;
+  const draftActiveToggleAnim = useRef(new Animated.Value(1)).current;
+  const draftPrimaryToggleAnim = useRef(new Animated.Value(1)).current;
 
   const availableGoals = [
     ...SPLIT_GOAL_OPTIONS,
@@ -247,6 +257,68 @@ export default function SavingsGoalScreen() {
     setTimeout(() => setShowMonthlyPercent(false), 1600);
   };
 
+  useEffect(() => {
+    Animated.timing(overallFillAnim, {
+      toValue: Math.max(0, Math.min(1, progress / 100)),
+      duration: 550,
+      useNativeDriver: false
+    }).start();
+  }, [overallFillAnim, progress]);
+
+  useEffect(() => {
+    Animated.timing(monthlyFillAnim, {
+      toValue: Math.max(0, Math.min(1, monthlyProgress / 100)),
+      duration: 550,
+      useNativeDriver: false
+    }).start();
+  }, [monthlyFillAnim, monthlyProgress]);
+
+  useEffect(() => {
+    if (!showOverallPercent) return;
+    overallBubbleAnim.setValue(0);
+    Animated.spring(overallBubbleAnim, {
+      toValue: 1,
+      friction: 7,
+      tension: 90,
+      useNativeDriver: true
+    }).start();
+  }, [overallBubbleAnim, showOverallPercent]);
+
+  useEffect(() => {
+    if (!showMonthlyPercent) return;
+    monthlyBubbleAnim.setValue(0);
+    Animated.spring(monthlyBubbleAnim, {
+      toValue: 1,
+      friction: 7,
+      tension: 90,
+      useNativeDriver: true
+    }).start();
+  }, [monthlyBubbleAnim, showMonthlyPercent]);
+
+  useEffect(() => {
+    Animated.timing(splitToggleAnim, {
+      toValue: extraSplitGoalsEnabled ? 1 : 0,
+      duration: 180,
+      useNativeDriver: false
+    }).start();
+  }, [extraSplitGoalsEnabled, splitToggleAnim]);
+
+  useEffect(() => {
+    Animated.timing(draftActiveToggleAnim, {
+      toValue: draftIsActive ? 1 : 0,
+      duration: 180,
+      useNativeDriver: false
+    }).start();
+  }, [draftIsActive, draftActiveToggleAnim]);
+
+  useEffect(() => {
+    Animated.timing(draftPrimaryToggleAnim, {
+      toValue: draftIsPrimary ? 1 : 0,
+      duration: 180,
+      useNativeDriver: false
+    }).start();
+  }, [draftIsPrimary, draftPrimaryToggleAnim]);
+
   const updateSplitGoal = (index, changes) => {
     setSplitGoals((current) => {
       const nextGoals = current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...changes } : item));
@@ -317,9 +389,9 @@ export default function SavingsGoalScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
+        <LinearGradient colors={[activeTheme.boxColor, activeTheme.supportingAccent]} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
           <View style={styles.heroTopRow}>
             <Text style={styles.heroTitle}>Savings Goal</Text>
             <Pressable
@@ -349,18 +421,18 @@ export default function SavingsGoalScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.viewTabsWrap}>
+        <View style={[styles.viewTabsWrap, { backgroundColor: `${activeTheme.boxColor}15` }]}>
           <Pressable
-            style={[styles.viewTab, activeView === "overview" && styles.viewTabActive]}
+            style={[styles.viewTab, activeView === "overview" && { backgroundColor: activeTheme.boxColor }]}
             onPress={() => setActiveView("overview")}
           >
-            <Text style={[styles.viewTabText, activeView === "overview" && styles.viewTabTextActive]}>Overview</Text>
+            <Text style={[styles.viewTabText, activeView === "overview" && { color: "#FFFFFF" }]}>Overview</Text>
           </Pressable>
           <Pressable
-            style={[styles.viewTab, activeView === "plan" && styles.viewTabActive]}
+            style={[styles.viewTab, activeView === "plan" && { backgroundColor: activeTheme.boxColor }]}
             onPress={() => setActiveView("plan")}
           >
-            <Text style={[styles.viewTabText, activeView === "plan" && styles.viewTabTextActive]}>Plan</Text>
+            <Text style={[styles.viewTabText, activeView === "plan" && { color: "#FFFFFF" }]}>Plan</Text>
           </Pressable>
         </View>
 
@@ -371,12 +443,43 @@ export default function SavingsGoalScreen() {
 
             <Pressable style={styles.progressTrackWrap} onPress={revealOverallProgress}>
               {showOverallPercent ? (
-                <View style={[styles.progressBubble, { left: `${Math.min(95, Math.max(6, progress))}%` }]}>
+                <Animated.View
+                  style={[
+                    styles.progressBubble,
+                    {
+                      left: `${Math.min(95, Math.max(6, progress))}%`,
+                      backgroundColor: activeTheme.boxColor,
+                      opacity: overallBubbleAnim,
+                      transform: [
+                        {
+                          translateY: overallBubbleAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [8, 0]
+                          })
+                        },
+                        {
+                          scale: overallBubbleAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.96, 1]
+                          })
+                        }
+                      ]
+                    }
+                  ]}
+                >
                   <Text style={styles.progressBubbleText}>{Math.max(0, progress)}%</Text>
-                </View>
+                </Animated.View>
               ) : null}
-              <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, progress))}%` }]} />
+              <View style={[styles.progressTrack, { backgroundColor: `${activeTheme.boxColor}15` }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(100, Math.max(0, progress))}%`,
+                      backgroundColor: activeTheme.boxColor
+                    }
+                  ]}
+                />
               </View>
             </Pressable>
 
@@ -389,7 +492,7 @@ export default function SavingsGoalScreen() {
               <Text style={styles.statValue}>{toCurrency(remaining)}</Text>
             </View>
 
-            <View style={styles.monthlyCard}>
+            <View style={[styles.monthlyCard, { borderColor: `${activeTheme.boxColor}22`, backgroundColor: `${activeTheme.backgroundColor}FF` }]}>
               <View style={styles.monthlyHeadRow}>
                 <Text style={styles.monthlyTitle}>Monthly Progress</Text>
                 <View style={[styles.healthBadge, { borderColor: monthlyHealthColor, backgroundColor: `${monthlyHealthColor}1A` }]}>
@@ -400,12 +503,43 @@ export default function SavingsGoalScreen() {
 
               <Pressable style={styles.progressTrackWrap} onPress={revealMonthlyProgress}>
                 {showMonthlyPercent ? (
-                  <View style={[styles.progressBubble, { left: `${Math.min(95, Math.max(6, monthlyProgress))}%`, backgroundColor: monthlyHealthColor }]}>
+                  <Animated.View
+                    style={[
+                      styles.progressBubble,
+                      {
+                        left: `${Math.min(95, Math.max(6, monthlyProgress))}%`,
+                        backgroundColor: monthlyHealthColor,
+                        opacity: monthlyBubbleAnim,
+                        transform: [
+                          {
+                            translateY: monthlyBubbleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [8, 0]
+                            })
+                          },
+                          {
+                            scale: monthlyBubbleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.96, 1]
+                            })
+                          }
+                        ]
+                      }
+                    ]}
+                  >
                     <Text style={styles.progressBubbleText}>{Math.max(0, monthlyProgress)}%</Text>
-                  </View>
+                  </Animated.View>
                 ) : null}
-                <View style={styles.monthlyTrack}>
-                  <View style={[styles.monthlyFill, { width: `${Math.min(100, Math.max(0, monthlyProgress))}%`, backgroundColor: monthlyHealthColor }]} />
+                <View style={[styles.monthlyTrack, { backgroundColor: `${activeTheme.boxColor}15` }]}>
+                  <View
+                    style={[
+                      styles.monthlyFill,
+                      {
+                        width: `${Math.min(100, Math.max(0, monthlyProgress))}%`,
+                        backgroundColor: monthlyHealthColor
+                      }
+                    ]}
+                  />
                 </View>
               </Pressable>
 
@@ -444,9 +578,9 @@ export default function SavingsGoalScreen() {
                       key={goal.id}
                       style={[
                         styles.goalCard,
-                        isPrimaryGoal && styles.goalCardPrimary,
-                        isActiveGoal && styles.goalCardActive,
-                        isPrimaryGoal && isActiveGoal && styles.goalCardPrimaryActive
+                        isPrimaryGoal && [styles.goalCardPrimary, { borderColor: `${activeTheme.supportingAccent}7F`, backgroundColor: activeTheme.backgroundColor }],
+                        isActiveGoal && [styles.goalCardActive, { borderColor: activeTheme.boxColor, shadowColor: activeTheme.boxColor }],
+                        isPrimaryGoal && isActiveGoal && { borderColor: `${activeTheme.supportingAccent}CC`, backgroundColor: `${activeTheme.backgroundColor}FF` }
                       ]}
                     >
                       <View style={styles.goalCardTopRow}>
@@ -455,9 +589,9 @@ export default function SavingsGoalScreen() {
                           <Text style={styles.goalCardName}>{goal.name}</Text>
                           <Text style={styles.goalCardDate}>{createdMonthLabel} · {createdLabel}</Text>
                         </View>
-                        <Pressable style={styles.goalCardEditBtn} onPress={() => openEditSheet(goal)}>
-                          <Ionicons name="create-outline" size={12} color="#2E2FA8" />
-                          <Text style={styles.goalCardEditBtnText}>Edit</Text>
+                        <Pressable style={[styles.goalCardEditBtn, { borderColor: `${activeTheme.boxColor}22`, backgroundColor: activeTheme.backgroundColor }]} onPress={() => openEditSheet(goal)}>
+                          <Ionicons name="create-outline" size={12} color={activeTheme.boxColor} />
+                          <Text style={[styles.goalCardEditBtnText, { color: activeTheme.boxColor }]}>Edit</Text>
                         </Pressable>
                       </View>
 
@@ -489,7 +623,7 @@ export default function SavingsGoalScreen() {
                 Add another goal when you want to extend the plan.
               </Text>
 
-              <View style={styles.splitControlCard}>
+              <View style={[styles.splitControlCard, { borderColor: `${activeTheme.boxColor}22`, backgroundColor: `${activeTheme.backgroundColor}80` }]}>
                 <View style={styles.splitControlRow}>
                   <View style={styles.splitControlCopy}>
                     <Text style={styles.splitControlTitle}>Extra goals</Text>
@@ -498,26 +632,41 @@ export default function SavingsGoalScreen() {
                     </Text>
                   </View>
                   <Pressable
-                    style={[styles.splitToggle, extraSplitGoalsEnabled && styles.splitToggleActive, !isPremium && styles.splitToggleDisabled]}
+                    style={[styles.splitToggle, extraSplitGoalsEnabled && { backgroundColor: activeTheme.boxColor }, !isPremium && styles.splitToggleDisabled]}
                     onPress={() => {
                       if (!isPremium) return;
                       setExtraSplitGoalsEnabled((current) => !current);
                     }}
                   >
-                    <View style={[styles.splitToggleKnob, extraSplitGoalsEnabled && styles.splitToggleKnobActive]} />
+                      <Animated.View
+                        style={[
+                          styles.splitToggleKnob,
+                          {
+                            backgroundColor: "#FFFFFF",
+                            transform: [
+                              {
+                                translateX: splitToggleAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0, 20]
+                                })
+                              }
+                            ]
+                          }
+                        ]}
+                      />
                   </Pressable>
                 </View>
               </View>
 
               <View style={styles.splitActionRow}>
-                <Pressable style={styles.splitActionBtn} onPress={addSplitGoal}>
-                  <Ionicons name="add-circle-outline" size={14} color="#2E2FA8" />
-                  <Text style={styles.splitActionBtnText}>Add Split Row</Text>
+                <Pressable style={[styles.splitActionBtn, { borderColor: `${activeTheme.boxColor}22`, backgroundColor: activeTheme.backgroundColor }]} onPress={addSplitGoal}>
+                  <Ionicons name="add-circle-outline" size={14} color={activeTheme.boxColor} />
+                  <Text style={[styles.splitActionBtnText, { color: activeTheme.boxColor }]}>Add Split Row</Text>
                 </Pressable>
 
-                <Pressable style={styles.splitActionBtn} onPress={balanceSplitGoals}>
-                  <Ionicons name="scale" size={14} color="#2E2FA8" />
-                  <Text style={styles.splitActionBtnText}>Balance</Text>
+                <Pressable style={[styles.splitActionBtn, { borderColor: `${activeTheme.boxColor}22`, backgroundColor: activeTheme.backgroundColor }]} onPress={balanceSplitGoals}>
+                  <Ionicons name="scale" size={14} color={activeTheme.boxColor} />
+                  <Text style={[styles.splitActionBtnText, { color: activeTheme.boxColor }]}>Balance</Text>
                 </Pressable>
               </View>
 
@@ -551,9 +700,9 @@ export default function SavingsGoalScreen() {
                         </Pressable>
                       </View>
 
-                      <Pressable style={styles.splitGoalBox} onPress={() => setSplitGoalPickerIndex(index)}>
-                        <Text style={styles.splitGoalText}>{selectedGoalName}</Text>
-                        <Text style={styles.goalSelectChevron}>⌄</Text>
+                      <Pressable style={[styles.splitGoalBox, { borderColor: `${activeTheme.boxColor}22`, backgroundColor: activeTheme.backgroundColor }]} onPress={() => setSplitGoalPickerIndex(index)}>
+                        <Text style={[styles.splitGoalText, { color: activeTheme.textColor }]}>{selectedGoalName}</Text>
+                        <Text style={[styles.goalSelectChevron, { color: activeTheme.boxColor }]}>⌄</Text>
                       </Pressable>
 
                       <View style={styles.splitPercentRow}>
@@ -593,7 +742,7 @@ export default function SavingsGoalScreen() {
               onChangeText={setDraftGoalName}
               placeholder="Goal name"
               placeholderTextColor="#9CA3AF"
-              style={styles.sheetInput}
+              style={[styles.sheetInput, { borderColor: `${activeTheme.boxColor}30`, color: activeTheme.textColor }]}
             />
 
             <Text style={styles.sheetLabel}>Total Target</Text>
@@ -603,7 +752,7 @@ export default function SavingsGoalScreen() {
               placeholder="PKR 0"
               placeholderTextColor="#9CA3AF"
               keyboardType="number-pad"
-              style={styles.sheetInput}
+              style={[styles.sheetInput, { borderColor: `${activeTheme.boxColor}30`, color: activeTheme.textColor }]}
             />
 
             <Text style={styles.sheetLabel}>Monthly Saving</Text>
@@ -613,7 +762,7 @@ export default function SavingsGoalScreen() {
               placeholder="PKR 0"
               placeholderTextColor="#9CA3AF"
               keyboardType="number-pad"
-              style={styles.sheetInput}
+              style={[styles.sheetInput, { borderColor: `${activeTheme.boxColor}30`, color: activeTheme.textColor }]}
             />
 
             <View style={styles.sheetToggleGroup}>
@@ -623,10 +772,25 @@ export default function SavingsGoalScreen() {
                   <Text style={styles.sheetToggleText}>More than one goal can stay active.</Text>
                 </View>
                 <Pressable
-                  style={[styles.sheetToggle, draftIsActive && styles.sheetToggleActive]}
+                  style={[styles.sheetToggle, draftIsActive && { backgroundColor: activeTheme.boxColor }]}
                   onPress={() => setDraftIsActive((current) => (draftIsPrimary ? true : !current))}
                 >
-                  <View style={[styles.sheetToggleKnob, draftIsActive && styles.sheetToggleKnobActive]} />
+                  <Animated.View
+                    style={[
+                      styles.sheetToggleKnob,
+                      {
+                        backgroundColor: "#FFFFFF",
+                        transform: [
+                          {
+                            translateX: draftActiveToggleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 20]
+                            })
+                          }
+                        ]
+                      }
+                    ]}
+                  />
                 </Pressable>
               </View>
 
@@ -636,7 +800,7 @@ export default function SavingsGoalScreen() {
                   <Text style={styles.sheetToggleText}>Primary goal shows first in the plan card.</Text>
                 </View>
                 <Pressable
-                  style={[styles.sheetToggle, draftIsPrimary && styles.sheetToggleActive]}
+                  style={[styles.sheetToggle, draftIsPrimary && { backgroundColor: activeTheme.boxColor }]}
                   onPress={() => {
                     setDraftIsPrimary((current) => {
                       const nextValue = !current;
@@ -645,16 +809,31 @@ export default function SavingsGoalScreen() {
                     });
                   }}
                 >
-                  <View style={[styles.sheetToggleKnob, draftIsPrimary && styles.sheetToggleKnobActive]} />
+                  <Animated.View
+                    style={[
+                      styles.sheetToggleKnob,
+                      {
+                        backgroundColor: "#FFFFFF",
+                        transform: [
+                          {
+                            translateX: draftPrimaryToggleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 20]
+                            })
+                          }
+                        ]
+                      }
+                    ]}
+                  />
                 </Pressable>
               </View>
             </View>
 
             <View style={styles.sheetActions}>
-              <Pressable style={[styles.sheetBtn, styles.sheetBtnGhost]} onPress={() => setIsSheetOpen(false)}>
-                <Text style={styles.sheetBtnGhostText}>Cancel</Text>
+              <Pressable style={[styles.sheetBtn, styles.sheetBtnGhost, { borderColor: `${activeTheme.boxColor}40` }]} onPress={() => setIsSheetOpen(false)}>
+                <Text style={[styles.sheetBtnGhostText, { color: activeTheme.boxColor }]}>Cancel</Text>
               </Pressable>
-              <Pressable style={[styles.sheetBtn, styles.sheetBtnPrimary]} onPress={saveEditSheet}>
+              <Pressable style={[styles.sheetBtn, styles.sheetBtnPrimary, { backgroundColor: activeTheme.boxColor }]} onPress={saveEditSheet}>
                 <Text style={styles.sheetBtnPrimaryText}>Save</Text>
               </Pressable>
             </View>

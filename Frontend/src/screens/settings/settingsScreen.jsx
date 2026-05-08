@@ -252,6 +252,12 @@ export default function SettingsScreen() {
               onPress={() => router.push("/edit-profile")}
             />
             <SettingsRow
+              icon="swap-horizontal-outline"
+              title="Switch Accounts"
+              subtitle="Manage business, travel, or personal profiles"
+              onPress={() => router.push("/switch-accounts?title=Switch%20Accounts&subtitle=Multiple%20account%20profiles%20are%20coming%20soon.%20This%20will%20let%20you%20move%20between%20business%2C%20travel%2C%20and%20personal%20views%20later.")}
+            />
+            <SettingsRow
               icon="image-outline"
               title="Update Avatar"
               subtitle="Choose from preset avatars"
@@ -279,6 +285,16 @@ export default function SettingsScreen() {
               isLast
             />
           </Section>
+
+            {/* ── SUBSCRIPTION ───────────────────────────────────────────────── */}
+            <Section title="Subscription">
+              <SettingsRow
+                icon="sparkles-outline"
+                title="Subscription Plan"
+                subtitle="Manage or upgrade your plan"
+                onPress={() => router.push("/premium")}
+              />
+            </Section>
 
           {/* ── SECURITY ─────────────────────────────────────────────────── */}
           <Section title="Security">
