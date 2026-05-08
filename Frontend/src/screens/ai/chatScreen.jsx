@@ -7,9 +7,12 @@ import { Ionicons } from "@expo/vector-icons";
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const [prompt, setPrompt] = useState("");
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -28,9 +31,9 @@ export default function ChatScreen() {
   ];
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 22 }]} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
+        <LinearGradient colors={[activeTheme.boxColor, activeTheme.supportingAccent]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 12 }] }>
           <View style={styles.heroCircleA} />
           <View style={styles.heroCircleB} />
           <View style={styles.heroTopRow}>
@@ -48,18 +51,18 @@ export default function ChatScreen() {
 
         <View style={styles.bodyContainer}>
           <View style={styles.messagesStack}>
-            <View style={[styles.messageBubble, styles.assistantBubble]}>
-              <Text style={styles.messageAuthor}>Assistant</Text>
+            <View style={[styles.messageBubble, styles.assistantBubble, { backgroundColor: `${activeTheme.boxColor}12`, borderColor: `${activeTheme.boxColor}22` }]}>
+              <Text style={[styles.messageAuthor, { color: activeTheme.boxColor }]}>Assistant</Text>
               <Text style={styles.messageText}>You are at 58% of your monthly budget. Consider reducing food spend this week.</Text>
             </View>
 
-            <View style={[styles.messageBubble, styles.userBubble]}>
-              <Text style={[styles.messageAuthor, styles.userAuthor]}>You</Text>
+            <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: `${activeTheme.supportingAccent}15`, borderColor: `${activeTheme.supportingAccent}30` }]}>
+              <Text style={[styles.messageAuthor, styles.userAuthor, { color: activeTheme.supportingAccent }]}>You</Text>
               <Text style={[styles.messageText, styles.userText]}>How can I save an extra 5,000 this month?</Text>
             </View>
 
-            <View style={[styles.messageBubble, styles.assistantBubble]}>
-              <Text style={styles.messageAuthor}>Assistant</Text>
+            <View style={[styles.messageBubble, styles.assistantBubble, { backgroundColor: `${activeTheme.boxColor}12`, borderColor: `${activeTheme.boxColor}22` }]}>
+              <Text style={[styles.messageAuthor, { color: activeTheme.boxColor }]}>Assistant</Text>
               <Text style={styles.messageText}>Start by reducing ride costs 15% and shopping 12%. That should free around PKR 5,400 this month.</Text>
             </View>
           </View>
@@ -68,16 +71,16 @@ export default function ChatScreen() {
             <Text style={styles.quickPromptTitle}>Quick prompts</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPromptWrap}>
               {quickPrompts.map((item) => (
-                <Pressable key={item} style={styles.quickPromptChip} onPress={() => setPrompt(item)}>
-                  <Text style={styles.quickPromptText}>{item}</Text>
+                <Pressable key={item} style={[styles.quickPromptChip, { borderColor: `${activeTheme.boxColor}40`, backgroundColor: activeTheme.backgroundColor }]} onPress={() => setPrompt(item)}>
+                  <Text style={[styles.quickPromptText, { color: activeTheme.boxColor }]}>{item}</Text>
                 </Pressable>
               ))}
             </ScrollView>
           </View>
 
-          <View style={styles.composerCard}>
+          <View style={[styles.composerCard, { backgroundColor: `${activeTheme.backgroundColor}F0`, borderColor: `${activeTheme.boxColor}22` }]}>
             <TextInput
-              style={styles.composerInput}
+              style={[styles.composerInput, { color: activeTheme.textColor }]}
               placeholder="Type a budgeting or savings question"
               placeholderTextColor="#9CA3AF"
               value={prompt}

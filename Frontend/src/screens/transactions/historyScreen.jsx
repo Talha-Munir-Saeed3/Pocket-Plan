@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 
 import ScreenContainer from "../../components/common/screenContainer";
 import PrimaryButton from "../../components/common/primaryButton";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 const TRANSACTIONS = [
   { id: "1", title: "Freelance Payment", category: "Income", date: "Today, 1:20 PM", amount: 22000, month: "Apr 2026", isThisWeek: true },
@@ -85,6 +86,8 @@ const GOAL_HISTORY = [
 export default function HistoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const { width } = useWindowDimensions();
   const compact = width < 380;
   const [activeTab, setActiveTab] = useState("Transactions");
@@ -162,10 +165,10 @@ export default function HistoryScreen() {
   if (!fontsLoaded) return null;
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient
-          colors={["#5C5CDB", "#3F2E95"]}
+          colors={[activeTheme.boxColor, activeTheme.supportingAccent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + 12 }]}

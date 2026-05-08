@@ -8,12 +8,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 export default function DashboardScreen() {
   const router = useRouter();
   const addTransactionLockRef = useRef(false);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const compact = width < 380;
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
@@ -49,10 +52,10 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <LinearGradient
-          colors={["#5C5CDB", "#3F2E95"]}
+          colors={[activeTheme.boxColor, activeTheme.supportingAccent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.hero, { paddingTop: insets.top + 12 }]}
@@ -76,7 +79,7 @@ export default function DashboardScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.bodyContainer}>
+        <View style={[styles.bodyContainer, { backgroundColor: activeTheme.backgroundColor }]}>
           <View style={styles.sectionPanel}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.row}>

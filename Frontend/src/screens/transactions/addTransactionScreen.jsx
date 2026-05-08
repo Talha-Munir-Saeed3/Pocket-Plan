@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import InputField from "../../components/common/inputField";
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
+import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
 
 const EXPENSE_CATEGORY_EMOJIS = {
   food: "🍔",
@@ -155,6 +156,8 @@ export default function AddTransactionScreen() {
   const router = useRouter();
   const searchParams = useLocalSearchParams();
   const insets = useSafeAreaInsets();
+  const selectedThemeId = useThemeStore((state) => state.selectedThemeId);
+  const activeTheme = THEME_OPTIONS.find((theme) => theme.id === selectedThemeId) ?? THEME_OPTIONS[0];
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -222,6 +225,13 @@ export default function AddTransactionScreen() {
     }
   };
 
+  useEffect(() => {
+    if (hasInitializedDateScrollRef.current) {
+      scrollDateWheelToSelected(false);
+    }
+  }, [selectedThemeId]);
+
+
   const saveTransaction = () => {
     if (!String(title ?? "").trim()) {
       setTitleError("Title is required");
@@ -271,9 +281,13 @@ export default function AddTransactionScreen() {
     setGoalPickerField(null);
   };
   return (
-    <ScreenContainer style={styles.screen} edges={["left", "right"]}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 28 }]} showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={["#5C5CDB", "#3F2E95"]} style={[styles.heroWrap, { paddingTop: insets.top + 8 }] }>
+    <ScreenContainer style={[styles.screen, { backgroundColor: activeTheme.backgroundColor }]} edges={["left", "right"]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 28 }]}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+      >
+        <LinearGradient colors={[activeTheme.boxColor, activeTheme.supportingAccent]} style={[styles.heroWrap, { paddingTop: insets.top + 8 }] }>
           <View style={styles.hero}>
             <View style={styles.heroTopRow}>
               <Text style={styles.heroTitle}>Add Transaction</Text>
@@ -764,7 +778,7 @@ const styles = StyleSheet.create({
     overflow: "hidden"
   },
   wheelScroll: {
-    maxHeight: 168
+    height: WHEEL_ROW_HEIGHT * 3
   },
   wheelContent: {
     paddingVertical: 0
