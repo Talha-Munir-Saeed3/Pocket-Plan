@@ -5,6 +5,7 @@ import { Header } from "./layout/Header";
 import { Dashboard } from "./pages/Dashboard";
 import { Payments } from "./pages/Payments";
 import { Support } from "./pages/Support";
+import { Users } from "./pages/Users";
 import "./App.css";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/users" element={<Users />} />
             </Routes>
           </div>
         </div>

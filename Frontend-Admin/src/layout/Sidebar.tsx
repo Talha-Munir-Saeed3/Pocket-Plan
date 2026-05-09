@@ -36,6 +36,13 @@ export const Sidebar: React.FC = () => {
           <span className="nav-icon">🎟️</span>
           <span>Support Tickets</span>
         </Link>
+        <Link
+          to="/users"
+          className={`nav-link ${isActive("/users") ? "active" : ""}`}
+        >
+          <span className="nav-icon">👥</span>
+          <span>Users</span>
+        </Link>
       </nav>
 
       <div className="sidebar-footer">
