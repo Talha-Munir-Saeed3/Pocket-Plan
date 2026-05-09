@@ -1,0 +1,151 @@
+=============================================================================
+POCKET PLAN — CURRENT DATABASE SCHEMA (IMPLEMENTED STATE)
+=============================================================================
+Database : MongoDB Atlas
+Backend  : FastAPI + PyMongo
+Scope    : What is actually active in the current codebase
+Updated  : May 2026
+=============================================================================
+
+IMPORTANT
+- This file reflects the CURRENT IMPLEMENTED backend routes and collections.
+- Some models exist in code for future features, but do not have active routes yet.
+- Frontend-Admin currently uses mock arrays in React pages, not backend APIs.
+  Therefore you will NOT see admin-specific Mongo collections yet.
+
+=============================================================================
+ACTIVE COLLECTIONS (USED BY CURRENT ROUTERS)
+=============================================================================
+
+1) transactions
+   Used by:
+   - POST /transactions
+   - GET /transactions
+   - GET /transactions/recent
+   - GET /transactions/history
+   - GET /reports/summary (reads)
+
+   Core fields:
+   - user_id (string, required)
+   - account_id (string, required)
+   - type (expense|income|transfer|borrow|lend|savings, required)
+   - amount (number > 0, required)
+   - currency (string, default PKR)
+   - category (required only for expense)
+   - description (optional)
+   - notes (optional)
+   - date (datetime)
+   - to_account_id (required for transfer)
+   - contact_name (required for borrow/lend)
+   - is_recurring (bool)
+   - recurring_frequency (required only if recurring)
+   - parent_transaction_id (optional)
+   - savings_action (required for savings)
+   - savings_goal_id (required for savings)
+   - target_goal_id (required only for savings transfer)
+   - created_at, updated_at
+
+
+2) budgets
+   Used by:
+   - POST /budgets (upsert by user_id + account_id + month + year)
+   - GET /budgets
+   - GET /budgets/current
+   - GET /reports/summary (reads)
+
+   Core fields:
+   - user_id (string, required)
+   - account_id (string, required)
+   - month (1-12, required)
+   - year (2000-2100, required)
+   - total_budget (number > 0, required)
+   - total_spent (number >= 0)
+   - savings_goal (number >= 0, optional)
+   - savings_current (number >= 0)
+   - category_limits (array)
+     - category (must be valid expense category)
+     - limit (number > 0)
+     - spent (number >= 0)
+     - alert_sent (bool)
+   - created_at, updated_at
+
+
+3) savings_goals
+   Used by:
+   - POST /savings-goals
+   - GET /savings-goals
+   - PATCH /savings-goals/{goal_id}
+
+   Core fields:
+   - user_id (string, required)
+   - account_id (string, optional)
+   - name (string, required)
+   - target_amount (number > 0, required)
+   - current_amount (number >= 0)
+   - monthly_contribution (number >= 0)
+   - target_date (datetime, optional)
+   - is_primary (bool)
+   - is_active (bool)
+   - created_at, updated_at
+
+
+4) Health checks (no collection)
+   - GET /health
+   - GET /health/db (pings DB)
+
+
+5) Reports (derived data)
+   - GET /reports/summary
+   Reads transactions + budgets and returns aggregated values.
+
+=============================================================================
+MODELS PRESENT IN BACKEND CODE BUT NOT EXPOSED BY ACTIVE ROUTERS
+=============================================================================
+
+These models exist in backend schema code, but there are currently no active
+API routes wired for CRUD in this project state:
+
+- users
+- user_profiles
+- user_preferences
+- accounts
+- chat_history
+- subscriptions
+
+They are future-ready models and may be used in later sprints.
+
+=============================================================================
+FRONTEND-ADMIN STATUS (WHY YOU DO NOT SEE ADMIN TABLES IN MONGO)
+=============================================================================
+
+Frontend-Admin pages currently render local mock arrays:
+- Payments page: static Payment[] list in React state
+- Support page: static SupportTicket[] list in React state
+- Users page: static User[] list in React state
+
+Current implication:
+- No backend admin routes are connected for these pages.
+- No admin collections are created/updated in Mongo from Frontend-Admin yet.
+
+If you want admin data in Mongo, next step is to add backend admin routers such
+as:
+- /admin/payments
+- /admin/support-tickets
+- /admin/users
+and then connect Frontend-Admin service layer to those APIs.
+
+=============================================================================
+CURRENT FRONTEND TO BACKEND DATA FLOW (ACTIVE)
+=============================================================================
+
+- Mobile Frontend (Expo) writes/reads:
+  - transactions
+  - budgets
+  - savings_goals
+  - reports summary
+
+- Frontend-Admin (Vite React):
+  - currently display-only with local mock data
+  - no live DB writes yet
+
+=============================================================================
