@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import ScreenContainer from "../../components/common/screenContainer";
 import PrimaryButton from "../../components/common/primaryButton";
 import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
+import { createSavingsGoal, defaultUserId, listSavingsGoals, updateSavingsGoal } from "../../services/api";
 
 const sanitizeNumber = (value) => value.replace(/[^0-9]/g, "");
 const toCurrency = (value) => `PKR ${Math.max(0, Number(value) || 0).toLocaleString()}`;
@@ -17,6 +18,7 @@ const formatNumberInput = (value) => {
   if (!numeric) return "";
   return Number(numeric).toLocaleString();
 };
+const isMongoObjectId = (value) => /^[0-9a-fA-F]{24}$/.test(String(value || ""));
 
 const SPLIT_GOAL_OPTIONS = [
   { id: "emergency", name: "Emergency Fund" },
@@ -176,6 +178,18 @@ export default function SavingsGoalScreen() {
     const monthly = sanitizeNumber(draftMonthlyContribution) || "0";
     const createdAt = new Date().toISOString();
 
+    const goalPayload = {
+      user_id: defaultUserId,
+      account_id: "account_personal",
+      name,
+      target_amount: Number(target) || 0,
+      current_amount: savedValue,
+      monthly_contribution: Number(monthly) || 0,
+      target_date: null,
+      is_primary: Boolean(draftIsPrimary),
+      is_active: Boolean(draftIsActive)
+    };
+
     if (isCreatingNewGoal) {
       const hasPrimary = goals.some((goal) => goal.isPrimary);
       const nextIsPrimary = draftIsPrimary || !hasPrimary;
@@ -203,6 +217,21 @@ export default function SavingsGoalScreen() {
       setGoalName(newGoal.name);
       setTargetAmount(newGoal.target);
       setMonthlyContribution(newGoal.monthly);
+      createSavingsGoal(goalPayload)
+        .then((savedGoal) => {
+          if (!savedGoal?.id) return;
+          setGoals((current) => current.map((goal) => (goal.id === newGoal.id ? {
+            ...goal,
+            id: savedGoal.id,
+            name: savedGoal.name,
+            target: String(savedGoal.target_amount ?? goal.target),
+            monthly: String(savedGoal.monthly_contribution ?? goal.monthly),
+            isPrimary: Boolean(savedGoal.is_primary),
+            isActive: Boolean(savedGoal.is_active)
+          } : goal)));
+          setActiveGoalId(savedGoal.id);
+        })
+        .catch(() => {});
     } else {
       const currentGoalId = editingGoalId ?? activeGoal?.id ?? goals[0]?.id ?? activeGoalId;
       setGoals((current) => {
@@ -236,6 +265,25 @@ export default function SavingsGoalScreen() {
       setGoalName(name || "New Laptop");
       setTargetAmount(target);
       setMonthlyContribution(monthly);
+      const syncPromise = isMongoObjectId(currentGoalId)
+        ? updateSavingsGoal(currentGoalId, goalPayload)
+        : createSavingsGoal(goalPayload).then((savedGoal) => {
+            if (!savedGoal?.id) return savedGoal;
+            setGoals((current) => current.map((goal) => (goal.id === currentGoalId
+              ? {
+                  ...goal,
+                  id: savedGoal.id,
+                  name: savedGoal.name,
+                  target: String(savedGoal.target_amount ?? goal.target),
+                  monthly: String(savedGoal.monthly_contribution ?? goal.monthly),
+                  isPrimary: Boolean(savedGoal.is_primary),
+                  isActive: Boolean(savedGoal.is_active)
+                }
+              : goal)));
+            return savedGoal;
+          });
+
+      syncPromise.catch(() => {});
       if (draftIsActive || draftIsPrimary) {
         setActiveGoalId(currentGoalId);
       } else {
@@ -246,6 +294,31 @@ export default function SavingsGoalScreen() {
 
     setIsSheetOpen(false);
   };
+
+  useEffect(() => {
+    listSavingsGoals(defaultUserId)
+      .then((items) => {
+        if (!Array.isArray(items) || !items.length) return;
+        const mappedGoals = items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          target: String(item.target_amount ?? 0),
+          monthly: String(item.monthly_contribution ?? 0),
+          createdAt: item.created_at || new Date().toISOString(),
+          isPrimary: Boolean(item.is_primary),
+          isActive: Boolean(item.is_active)
+        }));
+        setGoals(mappedGoals);
+        const primaryGoal = mappedGoals.find((goal) => goal.isPrimary) ?? mappedGoals[0];
+        if (primaryGoal) {
+          setActiveGoalId(primaryGoal.id);
+          setGoalName(primaryGoal.name);
+          setTargetAmount(primaryGoal.target);
+          setMonthlyContribution(primaryGoal.monthly);
+        }
+      })
+        .catch(() => {});
+  }, []);
 
   const revealOverallProgress = () => {
     setShowOverallPercent(true);

@@ -1,14 +1,82 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
 import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
+import { defaultUserId, getReportSummary, listRecentTransactions } from "../../services/api";
+
+const DEMO_RECENT_TRANSACTIONS = [
+  {
+    title: "Freelance Payment",
+    category: "income",
+    date: "2026-05-10T13:20:00",
+    amount: 22000,
+  },
+  {
+    title: "McDonald's",
+    category: "food",
+    date: "2026-05-10T14:45:00",
+    amount: -850,
+  },
+  {
+    title: "Careem Ride",
+    category: "transport",
+    date: "2026-05-10T09:15:00",
+    amount: -450,
+  },
+  {
+    title: "Fuel",
+    category: "transport",
+    date: "2026-05-09T08:10:00",
+    amount: -3200,
+  }
+];
+
+const CATEGORY_EMOJIS = {
+  income: "💰",
+  food: "🥗",
+  groceries: "🛒",
+  transport: "🚗",
+  shopping: "🛍️",
+  health: "💊",
+  savings: "🗄️",
+  education: "📚",
+  bills: "🧾",
+  sports: "⚽",
+  other: "💸"
+};
+
+const formatRecentMeta = (category, dateValue) => {
+  const value = new Date(dateValue);
+  const now = new Date();
+  const isSameDay =
+    value.getFullYear() === now.getFullYear() &&
+    value.getMonth() === now.getMonth() &&
+    value.getDate() === now.getDate();
+
+  const isYesterday =
+    value.getFullYear() === now.getFullYear() &&
+    value.getMonth() === now.getMonth() &&
+    value.getDate() === now.getDate() - 1;
+
+  const label = String(category || "other").replace(/_/g, " ");
+  const timeLabel = value.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  if (isSameDay) return `${label} | Today, ${timeLabel}`;
+  if (isYesterday) return `${label} | Yesterday`;
+  return `${label} | ${value.toLocaleDateString([], { month: "numeric", day: "numeric", year: "numeric" })}`;
+};
+
+const sortByNewest = (items = []) =>
+  [...items].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -25,19 +93,81 @@ export default function DashboardScreen() {
     Sora_800ExtraBold
   });
 
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [overviewData, setOverviewData] = useState({
+    income: 85000,
+    spent: 42500,
+    saved: 42500,
+    budgetUsed: 58
+  });
+
   const overviewCards = [
-    { label: "Income", value: "PKR 85,000", tone: "good", icon: "trending-up", accent: "#16A34A" },
-    { label: "Spent", value: "PKR 42,500", tone: "bad", icon: "trending-down", accent: "#DC2626" },
-    { label: "Saved", value: "PKR 42,500", tone: "good", icon: "wallet", accent: "#059669" },
-    { label: "Budget Used", value: "58%", tone: "warn", icon: "pie-chart", accent: "#D97706" }
+    { label: "Income", value: `PKR ${Math.max(0, overviewData.income).toLocaleString()}`, tone: "good", icon: "trending-up", accent: "#16A34A" },
+    { label: "Spent", value: `PKR ${Math.max(0, overviewData.spent).toLocaleString()}`, tone: "bad", icon: "trending-down", accent: "#DC2626" },
+    { label: "Saved", value: `PKR ${Math.max(0, overviewData.saved).toLocaleString()}`, tone: "good", icon: "wallet", accent: "#059669" },
+    { label: "Budget Used", value: `${Math.max(0, overviewData.budgetUsed)}%`, tone: "warn", icon: "pie-chart", accent: "#D97706" }
   ];
 
-  const recentTransactions = [
-    { title: "McDonald's", meta: "Food | Today, 2:45 PM", amount: -850, icon: "🍔" },
-    { title: "Careem Ride", meta: "Transport | Today, 9:15 AM", amount: -450, icon: "🚗" },
-    { title: "Fuel", meta: "Transport | Yesterday", amount: -3200, icon: "⛽" },
-    { title: "Pharmacy", meta: "Health | Yesterday", amount: -1200, icon: "💊" }
-  ];
+  const totalAvailable = 42500;
+
+  const loadRecentTransactions = useCallback(() => {
+    listRecentTransactions(defaultUserId, 4)
+      .then((items) => {
+        const mappedItems = (items || []).map((item) => ({
+          title: item.description || item.type || "Transaction",
+          category: String(item.category || item.type || "other").toLowerCase(),
+          date: item.date,
+          amount: item.type === "income" ? Number(item.amount) : -Math.abs(Number(item.amount)),
+          icon: CATEGORY_EMOJIS[String(item.category || item.type || "other").toLowerCase()] || CATEGORY_EMOJIS.other
+        }));
+        setRecentTransactions(mappedItems.length ? sortByNewest(mappedItems) : sortByNewest(DEMO_RECENT_TRANSACTIONS).map((item) => ({
+          ...item,
+          icon: CATEGORY_EMOJIS[item.category] || CATEGORY_EMOJIS.other,
+          meta: formatRecentMeta(item.category, item.date)
+        })));
+      })
+      .catch(() => {
+        setRecentTransactions(sortByNewest(DEMO_RECENT_TRANSACTIONS).map((item) => ({
+          ...item,
+          icon: CATEGORY_EMOJIS[item.category] || CATEGORY_EMOJIS.other,
+          meta: formatRecentMeta(item.category, item.date)
+        })));
+      });
+  }, []);
+
+  const loadSummary = useCallback(() => {
+    getReportSummary(defaultUserId)
+      .then((summary) => {
+        const income = Number(summary?.totals?.income || 0);
+        const spent = Number(summary?.totals?.expense || 0);
+        const saved = Number(summary?.totals?.savings || 0);
+        const budgetTotal = Number(summary?.budget?.total_budget || 0);
+        const budgetSpent = Number(summary?.budget?.total_spent || spent);
+        const budgetUsed = budgetTotal > 0 ? Math.round((budgetSpent / budgetTotal) * 100) : 0;
+
+        setOverviewData({
+          income,
+          spent,
+          saved,
+          budgetUsed
+        });
+      })
+      .catch(() => {
+        // Keep existing values when summary request fails.
+      });
+  }, []);
+
+  useEffect(() => {
+    loadRecentTransactions();
+    loadSummary();
+  }, [loadRecentTransactions, loadSummary]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadRecentTransactions();
+      loadSummary();
+    }, [loadRecentTransactions, loadSummary])
+  );
 
   if (!fontsLoaded) return null;
 
@@ -64,7 +194,7 @@ export default function DashboardScreen() {
           <View style={styles.heroGlowB} />
           <Text style={styles.heroGreeting}>Welcome back, Talha</Text>
           <Text style={[styles.heroBalanceLabel, compact && styles.heroBalanceLabelCompact]}>Total available</Text>
-          <Text style={[styles.heroBalanceValue, compact && styles.heroBalanceValueCompact]}>PKR 42,500</Text>
+          <Text style={[styles.heroBalanceValue, compact && styles.heroBalanceValueCompact]}>PKR {totalAvailable.toLocaleString()}</Text>
           <View style={styles.heroInsightsRow}>
             {[
               { title: "Today's spend", value: "PKR 2,430", note: "3 entries" },
@@ -139,16 +269,18 @@ export default function DashboardScreen() {
               <Text style={styles.linkText} onPress={() => router.push("/(tabs)/history")}>View all</Text>
             </View>
             {recentTransactions.map((item) => (
-              <View key={item.title} style={styles.transactionItem}>
+              <View key={`${item.title}-${item.date || item.meta}`} style={styles.transactionItem}>
                 <View style={styles.rowBetweenInner}>
                   <View style={styles.transactionLeft}>
                     <Text style={styles.transactionEmoji}>{item.icon}</Text>
                     <View>
                     <Text style={styles.transactionTitle}>{item.title}</Text>
-                    <Text style={styles.transactionMeta}>{item.meta}</Text>
+                    <Text style={styles.transactionMeta}>{item.meta || formatRecentMeta(item.category, item.date)}</Text>
                     </View>
                   </View>
-                  <Text style={styles.transactionAmount}>-PKR {Math.abs(item.amount).toLocaleString()}</Text>
+                  <Text style={[styles.transactionAmount, item.amount >= 0 ? styles.transactionAmountPositive : styles.transactionAmountNegative]}>
+                    {item.amount >= 0 ? "+" : "-"}PKR {Math.abs(item.amount).toLocaleString()}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -391,8 +523,13 @@ const styles = StyleSheet.create({
     fontFamily: "Sora_500Medium"
   },
   transactionAmount: {
-    color: "#B91C1C",
     fontSize: 15,
     fontFamily: "Sora_700Bold"
+  },
+  transactionAmountPositive: {
+    color: "#15803D"
+  },
+  transactionAmountNegative: {
+    color: "#B91C1C"
   }
 });

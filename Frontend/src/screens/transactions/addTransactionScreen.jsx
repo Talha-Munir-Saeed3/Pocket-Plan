@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
@@ -9,6 +9,7 @@ import InputField from "../../components/common/inputField";
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
 import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
+import { createTransaction, defaultAccountId, defaultUserId } from "../../services/api";
 
 const EXPENSE_CATEGORY_EMOJIS = {
   food: "🍔",
@@ -265,7 +266,53 @@ export default function AddTransactionScreen() {
 
     setDateError("");
 
-    router.back();
+    const numericAmount = Number(amount);
+    if (!numericAmount || numericAmount <= 0) {
+      Alert.alert("Amount required", "Enter a valid amount before saving.");
+      return;
+    }
+
+    const nowTime = new Date();
+    const transactionDate = new Date(selectedDate);
+    if (isSameDay(transactionDate, nowTime)) {
+      transactionDate.setHours(
+        nowTime.getHours(),
+        nowTime.getMinutes(),
+        nowTime.getSeconds(),
+        nowTime.getMilliseconds()
+      );
+    } else {
+      transactionDate.setHours(12, 0, 0, 0);
+    }
+
+    const normalizedType = type.toLowerCase();
+    const transactionPayload = {
+      user_id: defaultUserId,
+      account_id: defaultAccountId,
+      type: normalizedType,
+      amount: numericAmount,
+      currency: "PKR",
+      category: normalizedType === "expense" ? selectedCategory : null,
+      description: title,
+      notes: description || null,
+      date: transactionDate.toISOString(),
+      to_account_id: normalizedType === "transfer" ? "manual-transfer" : null,
+      contact_name: normalizedType === "borrow" || normalizedType === "lend" ? "manual-contact" : null,
+      is_recurring: false,
+      recurring_frequency: null,
+      parent_transaction_id: null,
+      savings_action: normalizedType === "savings" ? savingsAction : null,
+      savings_goal_id: normalizedType === "savings" ? selectedGoal : null,
+      target_goal_id: normalizedType === "savings" && savingsAction === "goal_transfer" ? transferTargetGoal : null
+    };
+
+    createTransaction(transactionPayload)
+      .then(() => {
+        router.back();
+      })
+      .catch((error) => {
+        Alert.alert("Could not save transaction", error?.message || "Please try again.");
+      });
   };
 
   const selectGoal = (goalId) => {
