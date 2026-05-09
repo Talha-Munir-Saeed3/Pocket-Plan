@@ -29,6 +29,13 @@ class TransactionType(str, Enum):
     TRANSFER = "transfer"
     BORROW = "borrow"
     LEND = "lend"
+    SAVINGS = "savings"
+
+
+class SavingsAction(str, Enum):
+    DEPOSIT = "savings_deposit"
+    WITHDRAWAL = "savings_withdrawal"
+    TRANSFER = "goal_transfer"
 
 
 class RecurringFrequency(str, Enum):
@@ -152,6 +159,9 @@ class Transaction(TimestampedModel):
     is_recurring: bool = False
     recurring_frequency: RecurringFrequency | None = None
     parent_transaction_id: str | None = None
+    savings_action: SavingsAction | None = None
+    savings_goal_id: str | None = None
+    target_goal_id: str | None = None
 
     @model_validator(mode="after")
     def validate_type_specific_fields(self) -> Transaction:
@@ -172,6 +182,19 @@ class Transaction(TimestampedModel):
 
         if not self.is_recurring and self.recurring_frequency is not None:
             raise ValueError("recurring_frequency must be null when is_recurring is false")
+
+        if self.type == TransactionType.SAVINGS:
+            if self.savings_action is None:
+                raise ValueError("savings_action is required for savings transactions")
+            if not self.savings_goal_id:
+                raise ValueError("savings_goal_id is required for savings transactions")
+            if self.savings_action == SavingsAction.TRANSFER and not self.target_goal_id:
+                raise ValueError("target_goal_id is required for savings transfer transactions")
+            if self.savings_action != SavingsAction.TRANSFER and self.target_goal_id is not None:
+                raise ValueError("target_goal_id must be null unless savings_action is goal_transfer")
+
+        if self.type != TransactionType.SAVINGS and (self.savings_action is not None or self.savings_goal_id is not None or self.target_goal_id is not None):
+            raise ValueError("savings fields are only valid for savings transactions")
 
         return self
 
@@ -214,3 +237,26 @@ class Subscription(MongoDocumentModel):
     started_at: datetime = Field(default_factory=utc_now)
     expires_at: datetime | None = None
     revenuecat_id: str | None = None
+
+
+class SavingsGoal(TimestampedModel):
+    user_id: str = Field(min_length=1)
+    account_id: str | None = None
+    name: str = Field(min_length=1, max_length=120)
+    target_amount: float = Field(gt=0)
+    current_amount: float = Field(default=0.0, ge=0)
+    monthly_contribution: float = Field(default=0.0, ge=0)
+    target_date: datetime | None = None
+    is_primary: bool = False
+    is_active: bool = True
+
+
+class SavingsGoalUpdate(MongoDocumentModel):
+    account_id: str | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    target_amount: float | None = Field(default=None, gt=0)
+    current_amount: float | None = Field(default=None, ge=0)
+    monthly_contribution: float | None = Field(default=None, ge=0)
+    target_date: datetime | None = None
+    is_primary: bool | None = None
+    is_active: bool | None = None

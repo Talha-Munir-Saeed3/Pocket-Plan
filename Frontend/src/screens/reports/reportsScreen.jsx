@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import ScreenContainer from "../../components/common/screenContainer";
 import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
+import { getReportSummary, listRecentTransactions, defaultUserId } from "../../services/api";
 
 const CATEGORY_COLORS = {
   Rent: "#4F46E5",
@@ -53,6 +54,7 @@ export default function ReportsScreen() {
   const [chartType, setChartType] = useState("Category Bars");
   const [chartMenuOpen, setChartMenuOpen] = useState(false);
   const [selectedTrendPoint, setSelectedTrendPoint] = useState(null);
+  const [backendSummary, setBackendSummary] = useState(null);
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
     Sora_600SemiBold,
@@ -109,14 +111,36 @@ export default function ReportsScreen() {
 
   const trendBars = useMemo(() => trendByPeriod[period], [period]);
   const categoryData = useMemo(
-    () => categoryByPeriod[period].map((item) => ({ ...item, color: getCategoryColor(item.label) })),
-    [period]
+    () => {
+      if (period === "Month" && Array.isArray(backendSummary?.category_breakdown) && backendSummary.category_breakdown.length) {
+        return backendSummary.category_breakdown.map((item) => ({
+          label: String(item.category).replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase()),
+          percent: backendSummary.totals.expense > 0 ? Math.round((Number(item.amount) / backendSummary.totals.expense) * 100) : 0,
+          amount: `PKR ${Number(item.amount || 0).toLocaleString()}`,
+          color: getCategoryColor(String(item.category).replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase()))
+        }));
+      }
+
+      return categoryByPeriod[period].map((item) => ({ ...item, color: getCategoryColor(item.label) }));
+    },
+    [period, backendSummary]
   );
   const trendDescriptor = useMemo(() => {
     if (period === "Week") return "Daily spend in the current week.";
     if (period === "Month") return "Average spend per week in this month.";
     return "Average spend per month in this quarter.";
   }, [period]);
+
+  useEffect(() => {
+    const today = new Date();
+    getReportSummary(defaultUserId, today.getMonth() + 1, today.getFullYear())
+      .then((summary) => {
+        setBackendSummary(summary || null);
+      })
+      .catch(() => setBackendSummary(null));
+
+    listRecentTransactions(defaultUserId, 5).catch(() => {});
+  }, []);
 
   if (!fontsLoaded) return null;
 

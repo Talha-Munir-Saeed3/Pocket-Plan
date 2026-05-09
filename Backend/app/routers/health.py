@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from app.db.mongo import get_database
+from db.mongo import get_database
 
 router = APIRouter(prefix="/health", tags=["health"])
 

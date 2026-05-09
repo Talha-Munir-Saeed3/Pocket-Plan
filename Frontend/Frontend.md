@@ -22,6 +22,14 @@ Pocket Plan mobile app lives in Frontend and is built with Expo Router.
 
 ## Run Command
 
-From the Frontend folder:
+From the `Frontend` folder:
 
+```powershell
+npm install
 npx expo start --tunnel
+```
+
+## API URL
+
+For frontend-only local work, keep `EXPO_PUBLIC_API_BASE_URL=http://localhost:8000` in `Frontend/.env`.
+If you are testing on a physical phone, replace `localhost` with your computer's LAN IP.

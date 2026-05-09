@@ -8,6 +8,7 @@ import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800Extra
 import PrimaryButton from "../../components/common/primaryButton";
 import ScreenContainer from "../../components/common/screenContainer";
 import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
+import { defaultAccountId, defaultUserId, getCurrentBudget, saveBudget } from "../../services/api";
 
 const CATEGORY_LIBRARY = [
   { key: "rent", label: "Rent", emoji: "🏠", weight: 0.28, spent: 25000 },
@@ -277,6 +278,26 @@ export default function BudgetScreen() {
   };
 
   const saveSnapshot = () => {
+    const parsedBudget = Number(monthlyBudget) || 0;
+    if (parsedBudget <= 0) {
+      Alert.alert("Budget required", "Enter a monthly budget greater than zero before saving.");
+      return;
+    }
+
+    const categoryLimits = categories
+      .map((item) => ({
+        category: item.key,
+        limit: Number(item.planned) || 0,
+        spent: Number(item.spent) || 0,
+        alert_sent: false
+      }))
+      .filter((item) => item.limit > 0);
+
+    if (!categoryLimits.length) {
+      Alert.alert("Allocation required", "Set at least one category limit greater than zero to save the budget.");
+      return;
+    }
+
     const snapshot = {
       id: Date.now().toString(),
       title: `${monthLabel} Plan`,
@@ -284,9 +305,63 @@ export default function BudgetScreen() {
       categories
     };
 
-    setSavedPlans((prev) => [snapshot, ...prev].slice(0, 4));
-    setSavedMessage("Snapshot saved in this session");
+    const currentDate = new Date();
+    const budgetPayload = {
+      user_id: defaultUserId,
+      account_id: defaultAccountId,
+      month: currentDate.getMonth() + 1,
+      year: currentDate.getFullYear(),
+      total_budget: parsedBudget,
+      total_spent: totalSpent,
+      savings_goal: null,
+      savings_current: 0,
+      category_limits: categoryLimits
+    };
+
+    saveBudget(budgetPayload)
+      .then(() => {
+        setSavedPlans((prev) => [snapshot, ...prev].slice(0, 4));
+        setSavedMessage("Snapshot saved to the database");
+      })
+      .catch((error) => {
+        Alert.alert("Could not save budget", error?.message || "Please try again.");
+      });
   };
+
+  useEffect(() => {
+    getCurrentBudget(defaultUserId, defaultAccountId)
+      .then((budget) => {
+        if (!budget || !Object.keys(budget).length) return;
+
+        if (budget.total_budget) {
+          setMonthlyBudget(String(budget.total_budget));
+        }
+
+        if (Array.isArray(budget.category_limits) && budget.category_limits.length) {
+          const nextCategories = CATEGORY_LIBRARY.filter((item) => budget.category_limits.some((limit) => limit.category === item.key)).map((item) => {
+            const matchedLimit = budget.category_limits.find((limit) => limit.category === item.key);
+            return {
+              ...item,
+              planned: String(matchedLimit?.limit ?? 0),
+              spent: Number(matchedLimit?.spent ?? item.spent)
+            };
+          });
+
+          if (nextCategories.length) {
+            setCategories(nextCategories);
+            setDraftPlanned(
+              nextCategories.reduce((acc, item) => {
+                acc[item.key] = item.planned;
+                return acc;
+              }, {})
+            );
+          }
+        }
+      })
+      .catch(() => {
+        // Keep local starter values if backend is unavailable.
+      });
+  }, []);
 
   const loadSnapshot = (snapshot) => {
     setMonthlyBudget(snapshot.monthlyBudget);
