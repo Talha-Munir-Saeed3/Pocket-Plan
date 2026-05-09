@@ -1,42 +1,35 @@
 # Pocket Plan
 
-This repository uses a simple SaaS-oriented structure:
+## Run Backend
 
-- Frontend/ - UI application (currently active workstream)
-- Frontend-Admin/ - admin portal frontend for support, payments, and payment-status operations
-- Backend/ - API and server-side logic
-- Documents/ - architecture, decisions, and security notes
-- AI Integration/ - prompts, eval assets, and AI-related artifacts
+```powershell
+cd Backend\app
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-## Environment Files
-
-- Each app keeps its own `.env.example` file with placeholders.
-- Real `.env` files contain secrets and must never be committed.
-
-Copy the relevant app-level template to `.env` when needed:
-
-- `Backend/.env.example` -> `Backend/.env`
-- `Frontend/.env.example` -> `Frontend/.env` (if/when needed)
-- `Frontend-Admin/.env.example` -> `Frontend-Admin/.env` (if/when needed)
-
-## Current Focus
-
-Frontend is now an Expo Router mobile app with a feature-grouped src structure.
+The backend runs on http://127.0.0.1:8000 (and is reachable on your LAN IP for phone testing).
 
 ## Run Frontend
 
-1. Open terminal in Frontend.
-2. Install dependencies if needed.
-3. Start Expo in tunnel mode.
-
-```bash
+```powershell
 cd Frontend
 npm install
 npx expo start --tunnel
 ```
 
-## Axios And Security Audit
+If you are working only on the frontend locally, keep `EXPO_PUBLIC_API_BASE_URL=http://localhost:8000` in `Frontend/.env`.
+If you are testing on a phone, replace `localhost` with your computer's LAN IP before starting Expo.
 
-- Axios is managed in Frontend/package.json and should be kept updated.
-- Run npm audit inside the Frontend folder to check dependency vulnerabilities.
-- Current moderate audit findings are from Vite/esbuild tooling, not Axios.
+## Run Frontend-Admin
+
+```powershell
+cd Frontend-Admin
+npm install
+npm run dev
+```
+
+## Environment Files
+
+- `Backend/.env` for backend settings such as MongoDB.
+- `Frontend/.env` for Expo variables like `EXPO_PUBLIC_API_BASE_URL`.
+- `Frontend-Admin/.env` if the admin app needs environment variables.
