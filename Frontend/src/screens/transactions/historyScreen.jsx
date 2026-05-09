@@ -1,13 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Sora_500Medium, Sora_600SemiBold, Sora_700Bold, Sora_800ExtraBold } from "@expo-google-fonts/sora";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 
 import ScreenContainer from "../../components/common/screenContainer";
 import PrimaryButton from "../../components/common/primaryButton";
 import { THEME_OPTIONS, useThemeStore } from "../../stores/themeStore";
+import { defaultUserId, listTransactionsHistory } from "../../services/api";
 
 const TRANSACTIONS = [
   { id: "1", title: "Freelance Payment", category: "Income", date: "Today, 1:20 PM", amount: 22000, month: "Apr 2026", isThisWeek: true },
@@ -93,6 +95,7 @@ export default function HistoryScreen() {
   const [activeTab, setActiveTab] = useState("Transactions");
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [transactions, setTransactions] = useState([]);
   const [fontsLoaded] = useFonts({
     Sora_500Medium,
     Sora_600SemiBold,
@@ -100,10 +103,64 @@ export default function HistoryScreen() {
     Sora_800ExtraBold
   });
 
-  const monthsInRange = useMemo(() => Array.from(new Set(TRANSACTIONS.map((item) => item.month))).slice(0, 3), []);
+  const toEpoch = (value) => {
+    const timestamp = Date.parse(value || "");
+    return Number.isNaN(timestamp) ? 0 : timestamp;
+  };
+
+  const visibleTransactions = useMemo(() => {
+    const merged = [...transactions, ...TRANSACTIONS];
+    const uniqueById = new Map();
+
+    merged.forEach((item) => {
+      uniqueById.set(item.id, item);
+    });
+
+    return Array.from(uniqueById.values()).sort((a, b) => toEpoch(b.sortDate || b.date) - toEpoch(a.sortDate || a.date));
+  }, [transactions]);
+
+  const monthsInRange = useMemo(() => Array.from(new Set(visibleTransactions.map((item) => item.month))).slice(0, 3), [visibleTransactions]);
+
+  const loadHistory = useCallback(() => {
+    listTransactionsHistory(defaultUserId, 3)
+      .then((items) => {
+        if (!Array.isArray(items) || !items.length) return;
+
+        const mappedTransactions = items.map((item) => {
+          const dateValue = new Date(item.date);
+          const formattedDate = dateValue.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          const monthLabel = dateValue.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          return {
+            id: item.id,
+            title: item.description || item.type || "Transaction",
+            category: String(item.category || item.type || "Other").replace(/_/g, " ").replace(/\b\w/g, (s) => s.toUpperCase()),
+            date: formattedDate,
+            sortDate: item.date,
+            amount: Number(item.amount) * (item.type === "income" ? 1 : -1),
+            month: monthLabel,
+            isThisWeek: false
+          };
+        });
+
+        setTransactions(mappedTransactions);
+      })
+      .catch(() => {
+        setTransactions([]);
+      });
+  }, []);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHistory();
+    }, [loadHistory])
+  );
 
   const filteredTransactions = useMemo(() => {
-    return TRANSACTIONS.filter((item) => {
+    return visibleTransactions.filter((item) => {
       const matchesQuery = query
         ? `${item.title} ${item.category}`.toLowerCase().includes(query.toLowerCase())
         : true;
@@ -116,7 +173,7 @@ export default function HistoryScreen() {
 
       return matchesQuery && matchesFilter && monthsInRange.includes(item.month);
     });
-  }, [activeFilter, query, monthsInRange]);
+      }, [activeFilter, query, monthsInRange, visibleTransactions]);
 
   const filteredGoals = useMemo(() => {
     return GOAL_HISTORY.filter((item) => {

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from app.models.pocket_plan_schema import Transaction, TransactionType
+from app.models.pocket_plan_schema import SavingsAction, SavingsGoal, Transaction, TransactionType
 
 
 def _base_payload() -> dict:
@@ -55,3 +55,23 @@ def test_valid_income_without_category() -> None:
 
     trx = Transaction(**payload)
     assert trx.type == TransactionType.INCOME
+
+
+def test_savings_goal_requires_positive_target_amount() -> None:
+    with pytest.raises(ValidationError):
+        SavingsGoal(
+            user_id="user_1",
+            name="Emergency Fund",
+            target_amount=0,
+        )
+
+
+def test_savings_transaction_requires_goal_fields() -> None:
+    payload = _base_payload()
+    payload["type"] = TransactionType.SAVINGS
+    payload["category"] = None
+    payload["savings_action"] = SavingsAction.TRANSFER
+    payload["savings_goal_id"] = "goal_1"
+
+    with pytest.raises(ValidationError):
+        Transaction(**payload)
